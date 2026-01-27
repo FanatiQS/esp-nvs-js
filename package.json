@@ -1,0 +1,6 @@
+{
+	"dependencies": {
+		"@types/w3c-web-serial": "^1.0.8",
+		"esptool-js": "0.5.6"
+	}
+}
