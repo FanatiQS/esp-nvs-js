@@ -389,3 +389,50 @@ export async function nvs_page_next(loader, addr_list) {
 	}
 	return null;
 }
+
+
+
+/**
+ * Iterates over all cached namespaces
+ * @param {nvs_cache} cache Cache storing parsed NVS entries
+ * @returns {Generator<[string,number],void,void>} Namespace index to use with cache
+ */
+export function* nvs_iterate_ns(cache) {
+	for (const [ namespace, entry ] of cache[0]) {
+		if (typeof entry.value !== "number") {
+			throw new Error("Invalid cache, namespace can only have a data type of uint8");
+		}
+		const ns = entry.value;
+		yield [ namespace, ns ];
+	}
+}
+
+/**
+ * Iterates over all cached key-value-pairs in namespace
+ * @param {nvs_cache} cache Cache storing parsed NVS entries
+ * @param {number} ns Namespace index
+ * @returns {Generator<[string,nvs_value],void,void>}
+*/
+export function* nvs_iterate_value(cache, ns) {
+	if (ns in cache) {
+		for (const [ key, entry ] of cache[ns]) {
+			if (entry.value == null) {
+				throw new Error("Invalid cache, entry not completed");
+			}
+			yield [ key, entry.value ];
+		}
+	}
+}
+
+/**
+ * Iterates over all cached key-value-pairs
+ * @param {nvs_cache} cache
+ * @returns {Generator<[string,string,nvs_value],void,void>}
+ */
+export function* nvs_iterate(cache) {
+	for (const [ namespace, ns ] of nvs_iterate_ns(cache)) {
+		for (const [ key, value ] of nvs_iterate_value(cache, ns)) {
+			yield [ namespace, key, value ];
+		}
+	}
+}

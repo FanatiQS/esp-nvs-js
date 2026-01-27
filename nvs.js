@@ -1,7 +1,7 @@
 // @ts-check
 
 import { ESPLoader } from "https://cdn.jsdelivr.net/npm/esptool-js@0.5.6/+esm";
-import { nvs_page_append, nvs_page_lookup, nvs_page_next, nvs_entry_next } from "./nvs_parser.js";
+import { nvs_page_append, nvs_page_lookup, nvs_page_next, nvs_entry_next, nvs_iterate } from "./nvs_parser.js";
 
 /**
  * @typedef {import("./nvs_parser.js").nvs_cache} nvs_cache
@@ -141,6 +141,20 @@ export class NVS {
 		}
 
 		return entry;
+	}
+
+	/**
+	 * Parses all NVS entries on device
+	 */
+	async all() {
+		while (await this.next());
+	}
+
+	/**
+	 * Iterates over all cached data
+	 */
+	[Symbol.iterator]() {
+		return nvs_iterate(this.cache);
 	}
 
 
