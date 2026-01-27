@@ -1,4 +1,8 @@
 {
+	"name": "esp-nvs-js",
+	"version": "0.1.0",
+	"author": "FanatiQS",
+	"type": "module",
 	"dependencies": {
 		"@types/w3c-web-serial": "^1.0.8",
 		"esptool-js": "0.5.6"
