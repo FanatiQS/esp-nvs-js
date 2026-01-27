@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>WiFi Example</title>
+	<style>
+		table, td {
+			border: 1px solid black;
+			border-collapse: collapse;
+		}
+		td {
+			min-width: 128px;
+			padding: .5em;
+		}
+		button {
+			margin: 1em 0;
+		}
+	</style>
+</head>
+<body>
+	<div>Reads WiFi configuration data from device over USB</div>
+	<button id="render">Read</button>
+	<table>
+		<tr>
+			<td>Station SSID</td>
+			<td id="sta-ssid"></td>
+		</tr>
+		<tr>
+			<td>Station Password</td>
+			<td id="sta-password"></td>
+		</tr>
+		<tr>
+			<td>SoftAP SSID</td>
+			<td id="ap-ssid"></td>
+		</tr>
+		<tr>
+			<td>SoftAP Password</td>
+			<td id="ap-password"></td>
+		</tr>
+	</table>
+	<script type="module">
+		// @ts-check
+		// cspell: ignore ssid pswd
+
+		import { NVS } from "/nvs.js";
+
+		// Serializes WiFi SSID using prepended 32bit length
+		function serialize_ssid(data) {
+			if (!data) return "";
+			const len = new DataView(data.buffer, data.byteOffset).getUint32(0, true);
+			return String.fromCharCode(...data.slice(4, 4 + len));
+		}
+
+		// Serializes WiFi password using null terminator
+		function serialize_password(data) {
+			if (!data) return "";
+			const len = data.indexOf(0x00);
+			return String.fromCharCode(...data.slice(0, (len !== -1) ? len : 64));
+		}
+
+		document.getElementById("render").addEventListener("click", async () => {
+			const nvs = new NVS(await navigator.serial.requestPort());
+
+			// Reads WiFi values from NVS
+			const sta_ssid = await nvs.get("nvs.net80211", "sta.ssid");
+			const sta_password = await nvs.get("nvs.net80211", "sta.pswd");
+			const ap_ssid = await nvs.get("nvs.net80211", "ap.ssid");
+			const ap_password = await nvs.get("nvs.net80211", "ap.passwd");
+
+			// Renders WiFi values in DOM
+			document.getElementById("sta-ssid").textContent = serialize_ssid(sta_ssid);
+			document.getElementById("sta-password").textContent = serialize_password(sta_password);
+			document.getElementById("ap-ssid").textContent = serialize_ssid(ap_ssid);
+			document.getElementById("ap-password").textContent = serialize_password(ap_password);
+		});
+	</script>
+</body>
+</html>
