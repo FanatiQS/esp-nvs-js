@@ -303,7 +303,6 @@ function nvs_entry_parse(page, cache) {
 	};
 	entries.set(key, entry);
 
-	// @todo
 	// Returns entry unless an incomplete blob
 	return (!chunks) ? entry : null;
 }
