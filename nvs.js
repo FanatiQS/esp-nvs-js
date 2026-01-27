@@ -96,11 +96,11 @@ export function nvs_get_string(buffer, offset, length) {
 }
 
 /**
- * Joins all chunks info a single buffer
- * @param {nvs_chunks} chunks
+ * Joins all chunks into a single buffer
  * @param {nvs_chunks_info} info
+ * @param {nvs_chunks} chunks
  */
-function nvs_entry_dechunk(chunks, info) {
+function nvs_chunks_assemble(info, chunks) {
 	const buf = new Uint8Array(info.size);
 	let offset = 0;
 	for (let i = info.start; i < chunks.arr.length; i++) {
@@ -222,7 +222,7 @@ function nvs_entry_parse(page, cache) {
 				entry.chunks.len++;
 				entry.chunks.arr[chunk_index] = chunk;
 				if (entry.chunks.info && entry.chunks.len === entry.chunks.info.count) {
-					entry.value = nvs_entry_dechunk(entry.chunks, entry.chunks.info);
+					entry.value = nvs_chunks_assemble(entry.chunks.info, entry.chunks);
 					entry.chunks = null;
 					return entry;
 				}
@@ -266,7 +266,7 @@ function nvs_entry_parse(page, cache) {
 				// Finalizes multi-chunk blob by joining chunks into a new buffer when all chunks are available
 				entry.chunks.len++;
 				if (entry.chunks.len === info.count) {
-					entry.value = nvs_entry_dechunk(entry.chunks, info);
+					entry.value = nvs_chunks_assemble(info, entry.chunks);
 					return entry;
 				}
 
@@ -426,7 +426,7 @@ export class NVS {
 
 
 	/**
-	 * Adds 1 or more NVS pages from NVS partition
+	 * Adds 1 or more NVS page addresses
 	 * If no partitions have been added before parsing, all NVS pages will automatically be fetched from partition table
 	 * @param {number} addr Address of an NVS partition
 	 * @param {number} len Size of the NVS partition
