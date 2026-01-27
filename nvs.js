@@ -2,6 +2,7 @@
 
 import { ESPLoader } from "https://cdn.jsdelivr.net/npm/esptool-js@0.5.6/+esm";
 import { nvs_page_append, nvs_page_lookup, nvs_page_next, nvs_entry_next, nvs_iterate } from "./nvs_parser.js";
+import { nvs_transform_json, nvs_transform_html } from "./nvs_transform.js";
 
 /**
  * @typedef {import("./nvs_parser.js").nvs_cache} nvs_cache
@@ -167,5 +168,21 @@ export class NVS {
 	async get(namespace, key) {
 		const entry = await this.find(namespace, key);
 		return entry && entry.value;
+	}
+
+
+
+	/**
+	 * Gets all cached data as JSON
+	 */
+	toJSON() {
+		return nvs_transform_json(this.cache);
+	}
+
+	/**
+	 * Gets all cached data as HTML table
+	 */
+	toHTML() {
+		return nvs_transform_html(this.cache);
 	}
 }

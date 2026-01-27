@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" type="text/css" href="/table.css">
+	<style>
+		body {
+			background: #eee;
+		}
+		.nvs {
+			background: white;
+		}
+	</style>
+	<title>Table example</title>
+</head>
+<body>
+	<button id="render">Read Device Parameters</button>
+	<script type="module">
+		import { NVS } from "/nvs.js";
+
+		document.getElementById("render").addEventListener("click", async () => {
+			const nvs = new NVS(await navigator.serial.requestPort());
+			await nvs.all();
+			document.body.appendChild(nvs.toHTML());
+		});
+	</script>
+</body>
+</html>
