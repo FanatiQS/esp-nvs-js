@@ -16,11 +16,21 @@
 	<title>Table example</title>
 </head>
 <body>
-	<button id="render">Read Device Parameters</button>
+	<button id="read">Read</button>
+	<span id="no-support" hidden>WebSerial not supported</span>
 	<script type="module">
+		// @ts-check
+
 		import { NVS } from "../nvs.js";
 
-		document.getElementById("render").addEventListener("click", async () => {
+		const btn = document.getElementById("read");
+
+		if (!("serial" in navigator)) {
+			btn.disabled = true;
+			document.getElementById("no-support").hidden = false;
+		}
+
+		btn.addEventListener("click", async () => {
 			const nvs = new NVS(await navigator.serial.requestPort());
 			await nvs.all();
 			document.body.appendChild(nvs.toHTML());

@@ -21,7 +21,8 @@
 </head>
 <body>
 	<div>Reads WiFi configuration data from device over USB</div>
-	<button id="render">Read</button>
+	<button id="read">Read</button>
+	<span id="no-support" hidden>WebSerial not supported</span>
 	<table>
 		<tr>
 			<td>Station SSID</td>
@@ -60,7 +61,14 @@
 			return String.fromCharCode(...data.slice(0, (len !== -1) ? len : 64));
 		}
 
-		document.getElementById("render").addEventListener("click", async () => {
+		const btn = document.getElementById("read");
+
+		if (!("serial" in navigator)) {
+			btn.disabled = true;
+			document.getElementById("no-support").hidden = false;
+		}
+
+		btn.addEventListener("click", async () => {
 			const nvs = new NVS(await navigator.serial.requestPort());
 
 			// Reads WiFi values from NVS
