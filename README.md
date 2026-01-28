@@ -1,0 +1,105 @@
+# ESP32 Non-Volatile Storage reader
+
+A JavaScript browser library for reading ESP32 Non-Volatile Storage (NVS) entries over USB using WebSerial.
+
+## Highlights
+* Reads specified NVS partitions or auto-detects them using device's partition table
+* Supports all NVS types (integers, strings, blobs)
+* Communicates directly with the ESP32 over USB using WebSerial
+* Efficiently reads just enough data to find what you are looking for
+* Can retrieve specific entry or get all entries
+* Provides both function-based and class-based interfaces
+* Includes built-in output formats for JSON and HTML
+* Easily customizable output via user-friendly iterator pattern
+
+## Browser Support
+
+WebSerial is a non-standard feature and is only supported in Chromium-based browsers.
+See [CanIUse](https://caniuse.com/web-serial) for browser support.
+
+## Live Demos
+
+* [WiFi example](https://fanatiqs.github.io/esp-nvs-js/examples/wifi.html)
+* [Table example](https://fanatiqs.github.io/esp-nvs-js/examples/table.html)
+
+## Usage
+
+The library can be used without any installs or build steps.
+Local install is only required for full TypeScript types support.
+
+### Install (optional)
+
+Installing is optional as the library can also be imported using a CDN.
+
+```bash
+npm install fanatiqs/esp-nvs-js
+```
+
+### Examples
+
+Other than limited browser support, WebSerial also only works on HTTPS/localhost and can only be triggered by a [UserGesture](https://developer.mozilla.org/en-US/docs/Glossary/Transient_activation), not on load.
+This means that all examples need to be called from some kind of user input, like a button press or other form of user initiated trigger.
+
+Import the library locally, installed through NPM or remotely from CDN.
+
+```js
+import { NVS } from "esp-nvs-js";
+```
+
+```js
+import { NVS } from "https://cdn.jsdelivr.net/gh/FanatiQS/esp-nvs-js@master/nvs.js";
+```
+
+#### Example 1
+
+Get the value for a specific entry.
+Look at `examples/wifi.html` ([demo](https://fanatiqs.github.io/esp-nvs-js/examples/wifi.html)) for a complete example.
+
+```js
+const nvs = new NVS(await navigator.serial.requestPort());
+const ssid = await nvs.get("nvs.net80211", "ap.ssid");
+console.log(ssid);
+```
+
+#### Example 2
+
+Get all values as JSON.
+
+```js
+const nvs = new NVS(await navigator.serial.requestPort());
+await nvs.all();
+console.log(nvs.toJSON());
+```
+
+#### Example 3
+
+Render all values in HTML table.
+Look at `examples/table.html` ([demo](https://fanatiqs.github.io/esp-nvs-js/examples/table.html)) for a complete example.
+
+```js
+const nvs = new NVS(await navigator.serial.requestPort());
+await nvs.all();
+document.body.appendChild(nvs.toHTML());
+```
+
+#### Example 4
+
+Get all values through iterator.
+
+```js
+const nvs = new NVS(await navigator.serial.requestPort());
+await nvs.all();
+for (const [ namespace, key, value ] of nvs) {
+	console.log(namespace, key, value);
+}
+```
+
+## Limitations
+* No support for encrypted NVS partitions
+* No delete or write support
+
+## Todo
+- [ ] Add tests
+- [ ] Add delete support
+- [ ] Add write support
+- [ ] Add support for encrypted partitions
