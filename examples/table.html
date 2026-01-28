@@ -18,7 +18,7 @@
 <body>
 	<button id="render">Read Device Parameters</button>
 	<script type="module">
-		import { NVS } from "/nvs.js";
+		import { NVS } from "../nvs.js";
 
 		document.getElementById("render").addEventListener("click", async () => {
 			const nvs = new NVS(await navigator.serial.requestPort());
