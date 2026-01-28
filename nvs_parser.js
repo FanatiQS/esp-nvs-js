@@ -27,7 +27,7 @@
  *
  * @typedef {Map<string,nvs_entry>[]} nvs_cache
  *
- * @typedef {import("esptool-js").ESPLoader} ESPLoader
+ * @typedef {import("./esptool.js").ESPLoader} ESPLoader
  */
 
 const HEADER_SIZE = 32;

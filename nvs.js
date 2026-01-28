@@ -1,6 +1,6 @@
 // @ts-check
 
-import { ESPLoader } from "https://cdn.jsdelivr.net/npm/esptool-js@0.5.6/+esm";
+import { ESPLoader } from "./esptool.js";
 import { nvs_page_append, nvs_page_lookup, nvs_page_next, nvs_entry_next, nvs_iterate } from "./nvs_parser.js";
 import { nvs_transform_json, nvs_transform_html } from "./nvs_transform.js";
 
@@ -13,7 +13,7 @@ import { nvs_transform_json, nvs_transform_html } from "./nvs_transform.js";
 
 export class NVS {
 	/**
-	 * @param {ESPLoader|SerialPort|undefined} loader Connected ESPTool loader with stub running
+	 * @param {ESPLoader|SerialPort} loader Connected ESPTool loader with stub running
 	 */
 	constructor(loader) {
 		if (loader instanceof SerialPort) {
