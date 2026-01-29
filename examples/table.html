@@ -14,8 +14,14 @@
 		}
 	</style>
 	<title>Table example</title>
+	<style>
+		button {
+			margin: 1em 0;
+		}
+	</style>
 </head>
 <body>
+	<div>Reads all NVS configurations from device over USB and puts it in a table</div>
 	<button id="read">Read</button>
 	<span id="no-support" hidden>WebSerial not supported</span>
 	<script type="module">
