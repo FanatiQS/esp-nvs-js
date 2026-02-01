@@ -1,6 +1,6 @@
 // @ts-check
 
-class Loader {
+export class Loader {
 	/**
 	 * @param {ArrayBuffer} buf
 	 * @param {(addr:number, size:number) => void} [readFlashHook]
