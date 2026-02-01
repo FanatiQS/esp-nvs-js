@@ -2,25 +2,27 @@
 <html lang="en">
 <head>
 	<meta charset="UTF-8">
-	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>WiFi Example</title>
 	<style>
+		body {
+			background: #eee;
+		}
 		table, td {
 			border: 1px solid black;
 			border-collapse: collapse;
+		}
+		table {
+			background: white;
+			margin: 1em 0;
 		}
 		td {
 			min-width: 128px;
 			padding: .5em;
 		}
-		button {
-			margin: 1em 0;
-		}
 	</style>
 </head>
 <body>
-	<div>Reads WiFi configuration data from device over USB</div>
+	<p>Reads WiFi configuration data from device over USB</p>
 	<button id="read">Read</button>
 	<span id="no-support" hidden>WebSerial not supported</span>
 	<table>
@@ -42,10 +44,16 @@
 		</tr>
 	</table>
 	<script type="module">
-		// @ts-check
-		// cspell: ignore ssid pswd
+		// cspell: ignore pswd
 
 		import { NVS } from "../src/nvs.js";
+
+		const btn = document.getElementById("read");
+
+		if (!("serial" in navigator)) {
+			btn.disabled = true;
+			document.getElementById("no-support").hidden = false;
+		}
 
 		// Serializes WiFi SSID using prepended 32bit length
 		function serialize_ssid(data) {
@@ -59,13 +67,6 @@
 			if (!data) return "";
 			const len = data.indexOf(0x00);
 			return String.fromCharCode(...data.slice(0, (len !== -1) ? len : 64));
-		}
-
-		const btn = document.getElementById("read");
-
-		if (!("serial" in navigator)) {
-			btn.disabled = true;
-			document.getElementById("no-support").hidden = false;
 		}
 
 		btn.addEventListener("click", async () => {

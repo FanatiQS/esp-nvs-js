@@ -2,29 +2,23 @@
 <html lang="en">
 <head>
 	<meta charset="UTF-8">
-	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<link rel="stylesheet" type="text/css" href="../src/table.css">
+	<title>Table example</title>
+	<link rel="stylesheet" href="../src/table.css">
 	<style>
 		body {
 			background: #eee;
 		}
 		.nvs {
+			margin: 1em;
 			background: white;
 		}
-		button {
-			margin: 1em 0;
-		}
 	</style>
-	<title>Table example</title>
 </head>
 <body>
-	<div>Reads all NVS configurations from device over USB and puts it in a table</div>
+	<p>Reads all NVS configurations from device over USB and puts it in a table</p>
 	<button id="read">Read</button>
 	<span id="no-support" hidden>WebSerial not supported</span>
 	<script type="module">
-		// @ts-check
-
 		import { NVS } from "../src/nvs.js";
 
 		const btn = document.getElementById("read");
