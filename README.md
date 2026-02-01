@@ -56,16 +56,18 @@ This means that all examples need to be called from some kind of user input, lik
 ### Example 1
 
 Get the value for a specific entry.
+Look at `examples/simple.html` ([demo](https://fanatiqs.github.io/esp-nvs-js/examples/simple.html)) for a complete example.
 
 ```js
 const nvs = new NVS(await navigator.serial.requestPort());
-const ssid = await nvs.get("nvs.net80211", "ap.ssid");
-console.log(ssid);
+const chan = await nvs.get("nvs.net80211", "sta.chan");
+console.log(chan);
 ```
 
 ### Example 2
 
 Get all values as JSON.
+Look at `examples/json.html` ([demo](https://fanatiqs.github.io/esp-nvs-js/examples/json.html)) for a complete example.
 
 ```js
 const nvs = new NVS(await navigator.serial.requestPort());

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>JSON example</title>
+	<style>
+		button {
+			margin: 1em 0;
+		}
+	</style>
+</head>
+<body>
+	<div>Reads all NVS configurations from device over USB and outputs it as JSON</div>
+	<button id="read">Read</button>
+	<span id="no-support" hidden>WebSerial not supported</span>
+	<pre id="available" hidden>JSON output available in the developer console</pre>
+	<script type="module">
+		import { NVS } from "../src/nvs.js";
+
+		const btn = document.getElementById("read");
+
+		if (!("serial" in navigator)) {
+			btn.disabled = true;
+			document.getElementById("no-support").hidden = false;
+		}
+
+		btn.addEventListener("click", async () => {
+			const nvs = new NVS(await navigator.serial.requestPort());
+			const chan = await nvs.get("nvs.net80211", "sta.chan");
+			console.log("WiFi station channel is", chan);
+			document.getElementById("available").hidden = false;
+		});
+	</script>
+</body>
+</html>
