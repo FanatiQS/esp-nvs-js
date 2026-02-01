@@ -80,12 +80,15 @@ export class NVS {
 			// Fetches NVS partitions automatically if no partitions have been added
 			if (!this.addr_list.length) {
 				await this.fetchFlashAddr();
+				if (!this.addr_list.length) {
+					throw new Error("No NVS partitions found");
+				}
 			}
 
 			// Reads first NVS page containing data
 			this.page = await nvs_page_next(this.loader, this.addr_list);
 			if (!this.page) {
-				throw new Error("No flash addresses added");
+				return null;
 			}
 		}
 
