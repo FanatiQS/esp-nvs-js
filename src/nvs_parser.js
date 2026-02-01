@@ -6,7 +6,7 @@
  * @property {DataView} view
  * @property {number} index
  *
- * @typedef {number|BigInt|string|Uint8Array} nvs_value
+ * @typedef {number|bigint|string|Uint8Array} nvs_value
  *
  * @typedef nvs_chunks_info
  * @property {number} size
@@ -116,6 +116,15 @@ function nvs_chunks_assemble(info, chunks) {
 }
 
 /**
+ * Simplifies bigint to number primitive if it is safe
+ * @param {bigint} bigint
+ */
+function nvs_bigint_simplify(bigint) {
+	const number = Number(bigint);
+	return (number <= Number.MAX_SAFE_INTEGER) ? number : bigint;
+}
+
+/**
  * Parses the entry pointed to in the page
  * @param {nvs_page} page NVS page to parse data from
  * @param {nvs_cache} cache Cache for storing parsed NVS entries
@@ -188,11 +197,11 @@ function nvs_entry_parse(page, cache) {
 			break;
 		}
 		case nvs_entry_type.uint64: {
-			value = page.view.getBigUint64(offset + 24);
+			value = nvs_bigint_simplify(page.view.getBigUint64(offset + 24));
 			break;
 		}
 		case nvs_entry_type.int64: {
-			value = page.view.getBigInt64(offset + 24);
+			value = nvs_bigint_simplify(page.view.getBigInt64(offset + 24));
 			break;
 		}
 		case nvs_entry_type.string: {
