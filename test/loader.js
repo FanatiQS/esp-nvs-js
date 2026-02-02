@@ -3,7 +3,7 @@
 export class Loader {
 	/**
 	 * @param {ArrayBuffer} buf
-	 * @param {(addr:number, size:number) => void} [readFlashHook]
+	 * @param {(addr:number, size:number) => void|Promise<void>} [readFlashHook]
 	 */
 	constructor(buf, readFlashHook) {
 		this.buf = buf;
@@ -17,12 +17,12 @@ export class Loader {
 	async readFlash(addr, size) {
 		// Runs hook callback if defined
 		if (this.readFlashHook) {
-			this.readFlashHook(addr, size);
+			await this.readFlashHook(addr, size);
 		}
 
 		// Ensures requested region exists in buffer
 		if ((addr + size) > this.buf.byteLength) {
-			throw new Error(`Firmware buffer does not contain requested page: ${addr.toString(16)}`);
+			throw new Error(`Firmware buffer does not contain requested page: 0x${addr.toString(16)}`);
 		}
 
 		// Returns requested slice of buffer
