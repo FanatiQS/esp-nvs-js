@@ -6,6 +6,7 @@ export class Loader {
 	 * @param {(addr:number, size:number) => void|Promise<void>} [readFlashHook]
 	 */
 	constructor(buf, readFlashHook) {
+		this.connected = false;
 		this.buf = buf;
 		this.readFlashHook = readFlashHook;
 	}
@@ -15,6 +16,11 @@ export class Loader {
 	 * @param {number} size
 	 */
 	async readFlash(addr, size) {
+		// Ensures loader was connected before reading flash
+		if (this.connected === false) {
+			throw new Error("Loader not connected");
+		}
+
 		// Runs hook callback if defined
 		if (this.readFlashHook) {
 			await this.readFlashHook(addr, size);
@@ -29,7 +35,9 @@ export class Loader {
 		return new Uint8Array(this.buf.slice(addr, addr + size));
 	}
 
-	async connect() {}
+	async connect() {
+		this.connected = true;
+	}
 	async runStub() {}
 }
 
