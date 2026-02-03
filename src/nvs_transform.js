@@ -34,7 +34,7 @@ export function nvs_transform_json(cache) {
 export function nvs_transform_html(cache) {
 	// Creates HTML table
 	const node_table = document.createElement("table");
-	node_table.classList.add("nvs");
+	node_table.classList.add("nvs-table");
 	const node_head = node_table.appendChild(document.createElement("thead"));
 	node_head.appendChild(document.createElement("th")).textContent = "Namespace";
 	node_head.appendChild(document.createElement("th")).textContent = "Key";
@@ -54,7 +54,7 @@ export function nvs_transform_html(cache) {
 				node_value.innerHTML = Array.from(value, (byte) => byte.toString(16).padStart(2, "0")).join(" ");
 			}
 			else {
-				node_value.classList.add((typeof value === "string") ? "nvs-string" : "nvs-int");
+				node_value.classList.add((typeof value === "string") ? "nvs-string" : "nvs-number");
 				node_value.textContent = value.toString();
 			}
 

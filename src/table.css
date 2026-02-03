@@ -1,24 +1,24 @@
-.nvs {
+.nvs-table {
 	font-family: sans-serif;
 	margin: auto;
 	--nvs-blob-width: 16
 }
 
-.nvs, .nvs th, .nvs td {
+.nvs-table, .nvs-table th, .nvs-table td {
 	border: 1px solid black;
 	border-collapse: collapse;
 	padding: .5em;
 }
 
-.nvs td {
+.nvs-table td {
 	vertical-align: baseline;
 }
-.nvs-namespace, .nvs-key {
+.nvs-table .nvs-namespace, .nvs-table .nvs-key {
 	position: sticky;
 	top: .5em;
 }
 
-.nvs-blob {
+.nvs-table .nvs-blob {
 	width: calc((3ch * var(--nvs-blob-width)) - 1ch);
 	font-family: monospace;
 }
