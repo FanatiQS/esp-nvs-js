@@ -6,11 +6,6 @@ import { exec } from "node:child_process";
 import { promisify } from "node:util";
 import { parse as csv_parse } from "csv-parse/sync";
 
-/**
- * @typedef {Object<string,{ key: string, value: string|number|bigint|Uint8Array, type?: string }[]>} test_nvs_config
- * @typedef {{ name: string, type: string, subtype: string, size: number, data?: test_nvs_config }[]} test_partitions
- */
-
 // Default directory to use for generated files
 const default_dir = "./generated";
 

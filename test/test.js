@@ -1,3 +1,5 @@
+// @ts-check
+
 import assert from "node:assert";
 import test from "node:test";
 
@@ -6,10 +8,6 @@ import { NVS } from "../src/nvs.js";
 import { firmware_generate, firmware_assemble } from "./test_parser.js";
 import "./stub_serialport.js";
 import { firmware_generate_partitions } from "./firmware_generate.js";
-
-/**
- * @typedef {Object<string,Object<string,string|number|bigint|Uint8Array>>} test_nvs_compare
- */
 
 // NVS configuration data
 const nvs_config = {
