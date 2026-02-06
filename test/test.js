@@ -5,7 +5,7 @@ import test from "node:test";
 
 import { createLoader } from "./loader.js";
 import { NVS } from "../src/nvs.js";
-import { firmware_generate, firmware_assemble } from "./test_parser.js";
+import { firmware_generate, firmware_assemble } from "./firmware.js";
 import "./stub_serialport.js";
 import { firmware_generate_partitions } from "./firmware_generate.js";
 
