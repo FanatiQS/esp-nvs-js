@@ -103,8 +103,11 @@ export async function firmware_generate(partitions, work_dir=default_dir) {
  * @param {string} [work_dir]
  */
 export async function firmware_assemble(work_dir=default_dir) {
-	// Generates partition table CSV from binary containing calculated address for each partition
+	// Reads partition table binary file first for better error if files have not been generated
 	const partition_table_bin_path = `${work_dir}/partition_table.bin`;
+	const partition_table_bin_data = await readFile(partition_table_bin_path);
+
+	// Generates partition table CSV from binary containing calculated address for each partition
 	const partition_table_csv_script = `$IDF_PATH/components/partition_table/gen_esp32part.py ${partition_table_bin_path}`;
 	const { stdout: partition_table_csv_data } = await python(partition_table_csv_script);
 
@@ -131,7 +134,7 @@ export async function firmware_assemble(work_dir=default_dir) {
 	// Assembles all binary files into a single firmware buffer
 	const firmware = new Uint8Array(total_size);
 	firmware.fill(0xff);
-	firmware.set(await readFile(partition_table_bin_path), 0x8000);
+	firmware.set(partition_table_bin_data, 0x8000);
 	for (const { addr, path } of partitions) {
 		firmware.set(await readFile(path), addr);
 	}
