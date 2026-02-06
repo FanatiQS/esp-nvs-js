@@ -6,7 +6,6 @@ import { nvs_iterate_ns, nvs_iterate_value } from "./nvs_parser.js";
 
 /**
  * @typedef {import("./nvs_parser.js").nvs_cache} nvs_cache
- * @typedef {import("./nvs_parser.js").nvs_value} nvs_value
  * @typedef {number|string|number[]|{type:"bigint",value:number,diff:number}} nvs_json_value
  */
 
