@@ -38,6 +38,8 @@ const PARTITION_TABLE_SIZE = 0xc00;
 const PARTITION_TABLE_ENTRY_SIZE = 32;
 const ENTRIES_COUNT_MAX = (PAGE_SIZE - HEADER_SIZE - BITMAP_SIZE) / ENTRY_SIZE;
 
+const decoder = new TextDecoder();
+
 /**
  * Possible NVS page states
  * @readonly
@@ -90,10 +92,10 @@ export const nvs_entry_type = {
  * @param {number} offset The start offset into the buffer
  * @param {number} length The max length of the string
  */
-export function nvs_get_string(buffer, offset, length) {
+function nvs_buffer_null_terminate(buffer, offset, length) {
 	const buf = new Uint8Array(buffer, offset, length);
-	const index = buf.indexOf(0);
-	return String.fromCharCode(...(index === -1) ? buf : buf.slice(0, index));
+	const index = buf.indexOf(0x00);
+	return (index === -1) ? buf : buf.slice(0, index);
 }
 
 /**
@@ -121,7 +123,7 @@ function nvs_chunks_assemble(info, chunks) {
  */
 function nvs_bigint_simplify(bigint) {
 	const number = Number(bigint);
-	return (number <= Number.MAX_SAFE_INTEGER) ? number : bigint;
+	return (number <= Number.MAX_SAFE_INTEGER && number >= Number.MIN_SAFE_INTEGER) ? number : bigint;
 }
 
 /**
@@ -160,7 +162,8 @@ function nvs_entry_parse(page, cache) {
 	// Gets data related to inserting entry into cache
 	const ns = page.view.getUint8(offset + 0);
 	const type = page.view.getUint8(offset + 1);
-	const key = nvs_get_string(page.view.buffer, page.view.byteOffset + offset + 8, 16);
+	const key_buf = nvs_buffer_null_terminate(page.view.buffer, page.view.byteOffset + offset + 8, 16);
+	const key = String.fromCharCode(...key_buf);
 	if (ns == 0 && type !== nvs_entry_type.uint8) {
 		throw new Error("Invalid NVS data type for namespace");
 	}
@@ -181,31 +184,33 @@ function nvs_entry_parse(page, cache) {
 			break;
 		}
 		case nvs_entry_type.uint16: {
-			value = page.view.getUint16(offset + 24);
+			value = page.view.getUint16(offset + 24, true);
 			break;
 		}
 		case nvs_entry_type.int16: {
-			value = page.view.getInt16(offset + 24);
+			value = page.view.getInt16(offset + 24, true);
 			break;
 		}
 		case nvs_entry_type.uint32: {
-			value = page.view.getUint32(offset + 24);
+			value = page.view.getUint32(offset + 24, true);
 			break;
 		}
 		case nvs_entry_type.int32: {
-			value = page.view.getInt32(offset + 24);
+			value = page.view.getInt32(offset + 24, true);
 			break;
 		}
 		case nvs_entry_type.uint64: {
-			value = nvs_bigint_simplify(page.view.getBigUint64(offset + 24));
+			value = nvs_bigint_simplify(page.view.getBigUint64(offset + 24, true));
 			break;
 		}
 		case nvs_entry_type.int64: {
-			value = nvs_bigint_simplify(page.view.getBigInt64(offset + 24));
+			value = nvs_bigint_simplify(page.view.getBigInt64(offset + 24, true));
 			break;
 		}
 		case nvs_entry_type.string: {
-			value = nvs_get_string(page.view.buffer, ENTRY_SIZE, page.view.getUint16(24, true));
+			const key_offset = offset + ENTRY_SIZE;
+			const key_length = page.view.getUint16(offset + 24, true);
+			value = decoder.decode(nvs_buffer_null_terminate(page.view.buffer, key_offset, key_length));
 			break;
 		}
 		case nvs_entry_type.blob_data: {
