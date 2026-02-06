@@ -133,6 +133,13 @@ test("parser", async () => {
 	assert.deepStrictEqual(nvs_config_cmp, parsed_cmp);
 });
 
+// Asserts that output from .toJSON can be serialized
+test("JSON serializable", async () => {
+	const nvs = new NVS(loader);
+	await nvs.all();
+	JSON.stringify(nvs.toJSON());
+});
+
 // Asserts JSON data is identical to configuration used to create it
 test("parsed JSON", async () => {
 	const nvs = new NVS(loader);
