@@ -7,6 +7,7 @@ import { nvs_iterate_ns, nvs_iterate_value } from "./nvs_parser.js";
 /**
  * @typedef {import("./nvs_parser.js").nvs_cache} nvs_cache
  * @typedef {import("./nvs_parser.js").nvs_value} nvs_value
+ * @typedef {number|string|number[]|{type:"bigint",value:number,diff:number}} nvs_json_value
  */
 
 /**
@@ -14,14 +15,30 @@ import { nvs_iterate_ns, nvs_iterate_value } from "./nvs_parser.js";
  * @param {nvs_cache} cache
  */
 export function nvs_transform_json(cache) {
-	/** @type {Object<string,Object<string,nvs_value>>} */
+	/** @type {Object<string,Object<string,nvs_json_value>>} */
 	const output = {};
 	for (const [ namespace, ns ] of nvs_iterate_ns(cache)) {
-		/** @type {Object<string,nvs_value>} */
+		/** @type {Object<string,nvs_json_value>} */
 		const entries = {};
 		output[namespace] = entries;
 		for (const [ key, value ] of nvs_iterate_value(cache, ns)) {
-			entries[key] = value;
+			// Converts array buffer to plain array
+			if (value instanceof Uint8Array) {
+				entries[key] = Array.from(value);
+			}
+			// Converts bigint to object representation to be JSON.stringify safe
+			else if (typeof value === "bigint") {
+				const num = Number(value);
+				entries[key] = {
+					type: "bigint",
+					value: num,
+					diff: Number(value - BigInt(num))
+				};
+			}
+			// No conversion for string or number
+			else {
+				entries[key] = value;
+			}
 		}
 	}
 	return output;
