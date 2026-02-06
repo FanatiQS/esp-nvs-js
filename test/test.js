@@ -101,6 +101,11 @@ function createLoaderAssertPartitions(firmware, partitions) {
 	});
 }
 
+// Currently BigInts are not supported in JSON
+test("JSON not support BigInt", () => {
+	assert.throws(() => JSON.stringify(1n));
+});
+
 // Assert that all NVS pages in manually specified partition are requested
 test("all pages requested", async () => {
 	const addr = 0x9000;
