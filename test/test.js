@@ -48,14 +48,14 @@ const nvs_config = {
 		{ key: "unsafe-i64-min", type: "i64", value: -BigInt(Number.MAX_SAFE_INTEGER) - 1n }
 	],
 	"string": [
-		{ key: "short", type: "string", value: "banana" },
-		{ key: "long", type: "string", value: "0123456789abcdef".repeat(124 * 2 - 1) + "0123456789abcde" },
-		{ key: "utf8", type: "string", value: "åäö√ø†ç≈ƒ†=π¬…æ" },
-		{ key: "emojis", type: "string", value: "💂‍♂️" }
+		{ key: "short", value: "banana" },
+		{ key: "long", value: "0123456789abcdef".repeat(124 * 2 - 1) + "0123456789abcde" },
+		{ key: "utf8", value: "åäö√ø†ç≈ƒ†=π¬…æ" },
+		{ key: "emojis", value: "💂‍♂️" }
 	],
 	"blob": [
-		{ key: "single-page", type: "hex2bin", value: new Uint8Array(5).map((value, index) => index) },
-		{ key: "multi-page", type: "hex2bin", value: new Uint8Array(0x2000).map((value, index) => index) }
+		{ key: "single-page", value: new Uint8Array(5).map((value, index) => index) },
+		{ key: "multi-page", value: new Uint8Array(0x2000).map((value, index) => index) }
 	],
 	"extra": [
 		{ key: "u64-unsafe", type: "u64", value: 2n ** 63n - 512n },

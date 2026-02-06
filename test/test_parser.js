@@ -63,9 +63,19 @@ export async function firmware_generate(partitions, work_dir=default_dir) {
 			// Writes NVS configuration to CSV file
 			for (const [ namespace, nvs_entries ] of Object.entries(data)) {
 				nvs_csv.write(`${namespace},namespace,,\n`);
-				for (const { key, type, value } of nvs_entries) {
-					nvs_csv.write(`${key},data,${type},`);
-					nvs_csv.write(`${(value instanceof Uint8Array) ? Buffer.from(value).toString("hex") : value}\n`);
+				for (let { key, type, value } of nvs_entries) {
+					// Type for blob is optional
+					if (value instanceof Uint8Array) {
+						value = Buffer.from(value).toString("hex");
+						type = "hex2bin";
+					}
+					// Type for string is optional
+					else if (typeof value === "string") {
+						type = "string";
+					}
+
+					// Writes NVS entry
+					nvs_csv.write(`${key},data,${type},${value}\n`);
 				}
 			}
 
