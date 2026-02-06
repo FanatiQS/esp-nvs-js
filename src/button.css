@@ -1,0 +1,70 @@
+/* Read button */
+[is=async-button] {
+	font-size: 1em;
+	padding: 0.35em 1.25em;
+	border-radius: 0.3em;
+	border: 0.1em solid #777;
+	background-color: #eee;
+	cursor: pointer;
+	position: relative;
+}
+
+/* Disables button when webserial is not supported */
+html:not(.webserial-available) [is=async-button] {
+	pointer-events: none;
+	opacity: 0.3;
+	filter: brightness(0.8);
+}
+
+/* Hides unsupported browser message when webserial is supported */
+.webserial-available .webserial-unsupported-message {
+	display: none;
+}
+
+/* Working spinner */
+[is=async-button]::after {
+	content: '';
+	font-size: 0.6em;
+	width: 2em;
+	height: 2em;
+	position: absolute;
+	left: calc(50% - 1em);
+	top: calc(50% - 1em);
+	box-sizing: border-box;
+	border: 0.25em solid transparent;
+	border-right-color: black;
+	border-radius: 50%;
+	animation: async-button-working 1s linear infinite;
+	opacity: 0;
+}
+
+/* Cover button content */
+[is=async-button]:before {
+	content: '';
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	display: block;
+	background: inherit;
+	border-radius: inherit;
+	transition-property: opacity;
+	transition-duration: 0.4s;
+	opacity: 0;
+}
+
+/* Working spinner animation */
+@keyframes async-button-working {
+	from {
+		transform: rotate(0);
+	}
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+/* Shows working spinner when working */
+[is=async-button][aria-working=true]:before, [is=async-button][aria-working=true]::after {
+	opacity: 1;
+}
