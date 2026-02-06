@@ -87,7 +87,7 @@ for (const [ namespace, entries ] of Object.entries(nvs_config)) {
  * @param {Uint8Array} firmware
  * @param {{ addr: number, size: number }[]} partitions
  */
-async function createLoaderAssertPartitions(firmware, partitions) {
+function createLoaderAssertPartitions(firmware, partitions) {
 	let offset = 0;
 	return createLoader(firmware.buffer, (addr, size) => {
 		const partition = partitions[0];
@@ -108,7 +108,7 @@ test("all pages requested", async () => {
 	const partitions = [ { addr, size } ];
 	const firmware = new Uint8Array(addr + size);
 	firmware.fill(0xff);
-	const nvs = new NVS(await createLoaderAssertPartitions(firmware, partitions));
+	const nvs = new NVS(createLoaderAssertPartitions(firmware, partitions));
 	nvs.addFlashAddr(addr, size);
 	await nvs.next();
 	assert(partitions.length === 0);
@@ -167,7 +167,7 @@ test("pages from partition table", async () => {
 		{ type: 0x0000, size: 0x5000, name: "bar" },
 		{ type: 0x0102, size: 0x3000, name: "baz" }
 	], 0x8000);
-	const nvs = new NVS(await createLoaderAssertPartitions(firmware, partitions));
+	const nvs = new NVS(createLoaderAssertPartitions(firmware, partitions));
 	await nvs.next();
 	assert(partitions.length === 0);
 });
