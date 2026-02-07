@@ -1,5 +1,7 @@
 // @ts-check
 
+/// <reference path="./types.d.ts" />
+
 import { readFile, mkdir } from "node:fs/promises";
 import { createWriteStream } from "node:fs";
 import { exec } from "node:child_process";
@@ -135,7 +137,7 @@ export async function firmware_assemble(work_dir=default_dir) {
 		firmware.set(await readFile(path), addr);
 	}
 
-	return firmware;
+	return firmware.buffer;
 }
 
 /**

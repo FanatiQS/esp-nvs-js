@@ -2,7 +2,7 @@
 
 export class Loader {
 	/**
-	 * @param {ArrayBuffer} buf
+	 * @param {ArrayBufferLike} buf
 	 * @param {(addr:number, size:number) => void|Promise<void>} [readFlashHook]
 	 */
 	constructor(buf, readFlashHook) {
@@ -42,7 +42,7 @@ export class Loader {
 }
 
 /**
- * @param {ArrayBuffer} buf
+ * @param {ArrayBufferLike} buf
  * @param {(addr:number, size:number) => void} [readFlashHook]
  */
 export function createLoader(buf, readFlashHook) {

@@ -1,5 +1,7 @@
 // @ts-check
 
+/// <reference path="./types.d.ts" />
+
 import assert from "node:assert";
 import test from "node:test";
 

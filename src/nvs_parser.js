@@ -88,7 +88,7 @@ export const nvs_entry_type = {
 /**
  * Gets a possibly NULL terminated ASCII string from an array buffer.
  * If the string is not NULL terminated, the entire length is used
- * @param {ArrayBuffer} buffer The buffer to extract the string from
+ * @param {ArrayBufferLike} buffer The buffer to extract the string from
  * @param {number} offset The start offset into the buffer
  * @param {number} length The max length of the string
  */
