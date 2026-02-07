@@ -8,7 +8,7 @@ import assert from "node:assert";
 import { parse as csv_parse } from "csv-parse/sync";
 
 // Default directory to use for generated files
-const default_dir = "./generated";
+const default_dir = `${import.meta.dirname}/generated`;
 
 // Runs a Python script
 const python = promisify(exec);
