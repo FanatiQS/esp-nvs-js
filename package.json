@@ -9,9 +9,10 @@
 	},
 	"devDependencies": {
 		"@types/node": "^25.1.0",
-		"csv-parse": "^6.1.0"
+		"csv-parse": "^6.1.0",
+		"typescript": "^5.9.3"
 	},
 	"scripts": {
-		"test": "node --import ./test/import_hook.js ./test/test.js"
+		"test": "npx tsc && node --import ./test/import_hook.js ./test/test.js"
 	}
 }
