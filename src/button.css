@@ -1,12 +1,50 @@
-/* Read button */
+/* Async button styling */
 [is=async-button] {
-	font-size: 1em;
-	padding: 0.35em 1.25em;
+	padding: 0.6em 3em;
 	border-radius: 0.3em;
 	border: 0.1em solid #777;
 	background-color: #eee;
 	cursor: pointer;
 	position: relative;
+}
+[is=async-button][aria-working=true] {
+	cursor: default;
+}
+
+/* Shows spinner when working */
+[is=async-button][aria-working=true]::after {
+	content: "";
+	font-size: 0.7em;
+	width: 2em;
+	height: 2em;
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	margin-top: -1em;
+	margin-left: -1em;
+	box-sizing: border-box;
+	border: 0.2em solid transparent;
+	border-right-color: black;
+	border-radius: 50%;
+	animation: async-button-working 1s linear infinite;
+}
+
+/* Covers button content when spinner is shown */
+[is=async-button]:before {
+	content: "";
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	background: inherit;
+	border-radius: inherit;
+	transition-property: opacity;
+	transition-duration: 0.4s;
+	opacity: 0;
+}
+[is=async-button][aria-working=true]:before {
+	opacity: 1;
 }
 
 /* Disables button when webserial is not supported */
@@ -21,50 +59,9 @@ html:not(.webserial-available) [is=async-button] {
 	display: none;
 }
 
-/* Working spinner */
-[is=async-button]::after {
-	content: '';
-	font-size: 0.6em;
-	width: 2em;
-	height: 2em;
-	position: absolute;
-	left: calc(50% - 1em);
-	top: calc(50% - 1em);
-	box-sizing: border-box;
-	border: 0.25em solid transparent;
-	border-right-color: black;
-	border-radius: 50%;
-	animation: async-button-working 1s linear infinite;
-	opacity: 0;
-}
-
-/* Cover button content */
-[is=async-button]:before {
-	content: '';
-	position: absolute;
-	top: 0;
-	bottom: 0;
-	left: 0;
-	right: 0;
-	display: block;
-	background: inherit;
-	border-radius: inherit;
-	transition-property: opacity;
-	transition-duration: 0.4s;
-	opacity: 0;
-}
-
 /* Working spinner animation */
 @keyframes async-button-working {
-	from {
-		transform: rotate(0);
-	}
 	to {
 		transform: rotate(360deg);
 	}
-}
-
-/* Shows working spinner when working */
-[is=async-button][aria-working=true]:before, [is=async-button][aria-working=true]::after {
-	opacity: 1;
 }
