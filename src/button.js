@@ -21,13 +21,15 @@ class AsyncButton extends HTMLButtonElement {
 			if (key.startsWith("on")) {
 				Object.defineProperty(this, key, {
 					get: () => {
+						// @ts-ignore
 						return super[key]?.callback;
 					},
 					set: (callback) => {
 						/** @param {Event} event */
 						const wrapper = (event) => this.dispatch(callback, event);
-						super[key] = wrapper;
 						wrapper.callback = callback;
+						// @ts-ignore
+						super[key] = wrapper;
 					}
 				});
 			}
