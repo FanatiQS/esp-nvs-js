@@ -20,6 +20,8 @@ See [CanIUse](https://caniuse.com/web-serial) for browser support.
 
 ## Live Demos
 
+* [Simple example](https://fanatiqs.github.io/esp-nvs-js/examples/simple.html)
+* [JSON example](https://fanatiqs.github.io/esp-nvs-js/examples/json.html)
 * [WiFi example](https://fanatiqs.github.io/esp-nvs-js/examples/wifi.html)
 * [Table example](https://fanatiqs.github.io/esp-nvs-js/examples/table.html)
 
