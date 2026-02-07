@@ -5,7 +5,7 @@ import test from "node:test";
 
 import { createLoader } from "./loader.js";
 import { NVS } from "../src/nvs.js";
-import { firmware_generate, firmware_assemble } from "./firmware.js";
+import { firmware_generate, firmware_assemble, firmware_assert, firmware_assert_nvs } from "./firmware.js";
 import "./stub_serialport.js";
 import { firmware_generate_partitions } from "./firmware_generate.js";
 
@@ -61,24 +61,23 @@ const nvs_config = {
 	]
 };
 
+// Alternative NVS configuration data
+const nvs_config2 = {
+	"extra": [
+		{ key: "duplicate", type: "u8", value: 2 }
+	]
+};
+
 // Generates firmware buffer
 await firmware_generate([
 	{ name: "phy_init", type: "data", subtype: "phy", size: 0x1000 },
 	{ name: "nvs", type: "data", subtype: "nvs", size: 0x6000, data: nvs_config },
-	{ name: "factory", type: "app", subtype: "factory", size: 0x10000 }
+	{ name: "factory", type: "app", subtype: "factory", size: 0x10000 },
+	{ name: "nvs2", type: "data", subtype: "nvs", size: 0x6000, data: nvs_config2 }
 ]);
 
 // Creates loader using generated firmware buffer
 const loader = createLoader(await firmware_assemble());
-
-// Creates compare object from config data
-/** @type {test_nvs_compare} */
-const nvs_config_cmp = {};
-for (const [ namespace, entries ] of Object.entries(nvs_config)) {
-	nvs_config_cmp[namespace] = Object.fromEntries(entries.map(({ key, value }) => [ key, value ]));
-}
-
-
 
 /**
  * Creates a loader that asserts every page was requested
@@ -99,6 +98,8 @@ function createLoaderAssertPartitions(firmware, partitions) {
 	});
 }
 
+
+
 // Currently BigInts are not supported in JSON
 test("JSON not support BigInt", () => {
 	assert.throws(() => JSON.stringify(1n));
@@ -112,7 +113,7 @@ test("all pages requested", async () => {
 	const firmware = new Uint8Array(addr + size);
 	firmware.fill(0xff);
 	const nvs = new NVS(createLoaderAssertPartitions(firmware, partitions));
-	nvs.addFlashAddr(addr, size);
+	nvs.setPartition(addr, size);
 	await nvs.next();
 	assert(partitions.length === 0);
 });
@@ -121,14 +122,7 @@ test("all pages requested", async () => {
 test("parser", async () => {
 	const nvs = new NVS(loader);
 	await nvs.all();
-
-	/** @type {test_nvs_compare} */
-	const parsed_cmp = {};
-	for (const [ namespace, key, value] of nvs) {
-		const entries = parsed_cmp[namespace] || (parsed_cmp[namespace] = {});
-		entries[key] = value;
-	}
-	assert.deepStrictEqual(nvs_config_cmp, parsed_cmp);
+	firmware_assert_nvs(nvs_config, nvs);
 });
 
 // Asserts that output from .toJSON can be serialized
@@ -161,8 +155,15 @@ test("parsed JSON", async () => {
 			}
 		}));
 	}
-	assert.deepStrictEqual(nvs_config_cmp, cmp_json);
+	firmware_assert(nvs_config, cmp_json);
+});
 
+// Asserts that specifying a non default NVS partition parses correct partition
+test("non default nvs partition", async () => {
+	const nvs = new NVS(loader);
+	await nvs.fetchPartition("nvs2");
+	await nvs.all();
+	firmware_assert_nvs(nvs_config2, nvs);
 });
 
 // Asserts that all existing NVS pages are requested with correct address and size

@@ -344,21 +344,28 @@ export function nvs_entry_next(page, cache) {
  * Adds NVS pages from an NVS partition to the specified addresses list
  * @param {number} addr Address of the NVS partition
  * @param {number} len Size of the NVS partition
- * @param {number[]} addr_list List of NVS page addresses to append the extracted addresses to
+ * @param {number[]} addr_list Empty list of NVS page addresses to add the extracted addresses to
  */
-export function nvs_page_append(addr, len, addr_list) {
+export function nvs_page_set(addr, len, addr_list) {
+	// Requires address list to be empty before adding new pages
+	if (addr_list.length !== 0) {
+		throw new Error("Partition already set");
+	}
+
+	// Adds partition page address range to address list
 	for (let i = 0; i < len; i += 0x1000) {
 		addr_list.push(addr + i);
 	}
 }
 
 /**
- * Fetches all NVS partitions from device and adds them to the specified addresses list
+ * Fetches NVS partition from device and adds its pages to the specified addresses list
  * @param {ESPLoader} loader Connected ESPTool loader with stub running
- * @param {number} addr Address of the partition table
- * @param {number[]} addr_list List of NVS page addresses to append the extracted addresses to
+ * @param {number[]} addr_list Empty list of NVS page addresses to append the extracted addresses to
+ * @param {string} [name] Partition name to get the page addresses for
+ * @param {number} [addr] Address of the partition table
  */
-export async function nvs_page_lookup(loader, addr, addr_list) {
+export async function nvs_page_lookup(loader, addr_list, name = "nvs", addr = 0x8000) {
 	// Reads partition table from device
 	const data = await loader.readFlash(addr, PARTITION_TABLE_SIZE);
 	const view = new DataView(data.buffer);
@@ -369,9 +376,14 @@ export async function nvs_page_lookup(loader, addr, addr_list) {
 			break;
 		}
 
-		// Registers NVS partition if it has correct magic number, type, subtype and is not encrypted
-		if (view.getUint32(i + 0) === 0xaa500102 && view.getUint32(i + 28) === 0x00000000) {
-			nvs_page_append(view.getUint32(i + 4, true), view.getUint32(i + 8, true), addr_list);
+		// Registers NVS partition if it has correct magic number, type, subtype, name and is not encrypted
+		if (
+			view.getUint32(i + 0) === 0xaa500102
+			&& view.getUint32(i + 28) === 0x00000000
+			&& String.fromCharCode(...nvs_buffer_null_terminate(view.buffer, view.byteOffset + i + 12, 16)) === name
+		) {
+			nvs_page_set(view.getUint32(i + 4, true), view.getUint32(i + 8, true), addr_list);
+			break;
 		}
 	}
 }
@@ -379,7 +391,8 @@ export async function nvs_page_lookup(loader, addr, addr_list) {
 /**
  * Reads next NVS page from device
  * @param {ESPLoader} loader Connected ESPTool loader with stub running
- * @param {number[]} addr_list Address to read page from
+ * @param {number[]} addr_list Address list to get the next page address from
+ * @returns {Promise<nvs_page|null>}
  */
 export async function nvs_page_next(loader, addr_list) {
 	/** @type {number|undefined} */
@@ -392,13 +405,11 @@ export async function nvs_page_next(loader, addr_list) {
 		// Returns page object for parsing if it could contain data
 		const state = view.getUint32(0, true);
 		if (state === nvs_page_states.active || state === nvs_page_states.full) {
-			/** @type {nvs_page} */
-			const page = {
+			return {
 				addr: addr,
 				index: 0,
 				view: view
 			};
-			return page;
 		}
 	}
 	return null;

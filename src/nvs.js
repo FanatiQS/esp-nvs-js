@@ -1,7 +1,7 @@
 // @ts-check
 
 import { ESPLoader } from "./esptool.js";
-import { nvs_page_append, nvs_page_lookup, nvs_page_next, nvs_entry_next, nvs_iterate } from "./nvs_parser.js";
+import { nvs_page_set, nvs_page_lookup, nvs_page_next, nvs_entry_next, nvs_iterate } from "./nvs_parser.js";
 import { nvs_transform_json, nvs_transform_html } from "./nvs_transform.js";
 
 /**
@@ -45,22 +45,29 @@ export class NVS {
 
 
 	/**
-	 * Adds 1 or more NVS page addresses
-	 * If no partitions have been added before parsing, all NVS pages will automatically be fetched from partition table
+	 * Specifies NVS partition to use
+	 * If no partition have been specified before parsing, default NVS page will automatically be fetched from partition table
 	 * @param {number} addr Address of an NVS partition
 	 * @param {number} len Size of the NVS partition
 	 */
-	addFlashAddr(addr, len) {
-		nvs_page_append(addr, len, this.addr_list);
+	setPartition(addr, len) {
+		nvs_page_set(addr, len, this.addr_list);
 	}
 
 	/**
-	 * Fetches all NVS partitions from device
-	 * If no partitions have been added before parsing, all NVS pages will automatically be fetched from partition table
+	 * Fetches NVS partition from device
+	 * If no partition have been specified before parsing, default NVS page will automatically be fetched from partition table
+	 * @param {string} [partitionName="nvs"] Partition name to get the page addresses for
 	 * @param {number} [addr=0x8000] Address of the partition table
 	 */
-	async fetchFlashAddr(addr = 0x8000) {
-		return nvs_page_lookup(this.loader, addr, this.addr_list);
+	async fetchPartition(partitionName, addr) {
+		// Connects to device if not already connected
+		if (!this.loader.chip) {
+			await this.connect();
+		}
+
+		// Fetches page addresses of NVS partition
+		await nvs_page_lookup(this.loader, this.addr_list, partitionName, addr);
 	}
 
 
@@ -79,7 +86,7 @@ export class NVS {
 
 			// Fetches NVS partitions automatically if no partitions have been added
 			if (!this.addr_list.length) {
-				await this.fetchFlashAddr();
+				await this.fetchPartition();
 				if (!this.addr_list.length) {
 					throw new Error("No NVS partitions found");
 				}
