@@ -5,13 +5,13 @@
 import { nvs_iterate_ns, nvs_iterate_value } from "./nvs_parser.js";
 
 /**
- * @typedef {import("./nvs_parser.js").nvs_cache} nvs_cache
- * @typedef {number|string|number[]|{type:"bigint",value:number,diff:number}} nvs_json_value
+ * @typedef {{ type: "bigint", value: number, diff: number }} nvs_json_bigint
+ * @typedef {number|string|number[]|nvs_json_bigint} nvs_json_value
  */
 
 /**
  * Gets all cached data as JSON
- * @param {nvs_cache} cache
+ * @param {import("./nvs_parser.js").nvs_cache} cache
  */
 export function nvs_transform_json(cache) {
 	/** @type {Object<string,Object<string,nvs_json_value>>} */
@@ -45,7 +45,7 @@ export function nvs_transform_json(cache) {
 
 /**
  * Gets all cached data as HTML table
- * @param {nvs_cache} cache
+ * @param {import("./nvs_parser.js").nvs_cache} cache
  */
 export function nvs_transform_html(cache) {
 	// Creates HTML table

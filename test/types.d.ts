@@ -1,8 +1,8 @@
-declare type test_nvs_value = string | number | bigint | Uint8Array;
+type nvs_value = import("../src/nvs_parser.js").nvs_value;
 
 declare interface test_nvs_entry {
 	key: string;
-	value: test_nvs_value;
+	value: nvs_value;
 	type?: string;
 }
 
@@ -22,7 +22,7 @@ declare type test_partitions = Array<test_partition>;
 
 declare interface test_nvs_compare {
 	[key: string]: {
-		[key: string]: test_nvs_value;
+		[key: string]: nvs_value;
 	}
 }
 

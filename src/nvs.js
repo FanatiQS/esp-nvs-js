@@ -4,13 +4,6 @@ import { ESPLoader } from "./esptool.js";
 import { nvs_page_set, nvs_page_lookup, nvs_page_next, nvs_entry_next, nvs_iterate } from "./nvs_parser.js";
 import { nvs_transform_json, nvs_transform_html } from "./nvs_transform.js";
 
-/**
- * @typedef {import("./nvs_parser.js").nvs_cache} nvs_cache
- * @typedef {import("./nvs_parser.js").nvs_page} nvs_page
- * @typedef {import("./nvs_parser.js").nvs_entry} nvs_entry
- * @typedef {import("./nvs_parser.js").nvs_value} nvs_value
- */
-
 export class NVS {
 	/**
 	 * @param {ESPLoader|SerialPort} loader Connected ESPTool loader with stub running
@@ -28,9 +21,9 @@ export class NVS {
 
 		/** @type {number[]} */
 		this.addr_list = [];
-		/** @type {nvs_page|null} */
+		/** @type {import("./nvs_parser.js").nvs_page|null} */
 		this.page = null;
-		/** @type {nvs_cache} */
+		/** @type {import("./nvs_parser.js").nvs_cache} */
 		this.cache = [ new Map() ];
 	}
 
@@ -117,7 +110,7 @@ export class NVS {
 	 * @returns Found entry or null if not found
 	 */
 	async find(namespace, key) {
-		/** @type {nvs_entry|undefined} */
+		/** @type {import("./nvs_parser.js").nvs_entry|undefined} */
 		let entry;
 
 		// Gets namespace number
