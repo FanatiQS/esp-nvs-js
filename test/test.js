@@ -4,11 +4,15 @@
 
 import assert from "node:assert";
 import test from "node:test";
+import { ESPLoader } from "esptool-js";
 
 import { loader_from_map } from "./loader.js";
 import { NVS } from "../src/nvs.js";
 import { firmware_generate, firmware_assemble, firmware_assert, firmware_assert_nvs } from "./firmware.js";
 import "./stub_serialport.js";
+
+// Prevents ESPLoader from printing to the console
+ESPLoader.prototype.write = () => {};
 
 // NVS configuration data
 const nvs_config = {
@@ -86,6 +90,12 @@ const loader = loader_from_map(loader_map);
 // Currently BigInts are not supported in JSON
 test("JSON not support BigInt", () => {
 	assert.throws(() => JSON.stringify(1n));
+});
+
+// Asserts that a type cast used in the NVS constructor is still required
+test("internal cast required", () => {
+	// @ts-expect-error
+	new ESPLoader({ port: new SerialPort() });
 });
 
 // Assert that all pages in manually specified NVS partition are requested
@@ -175,6 +185,7 @@ test("parsed JSON", async () => {
 			}
 			// Converts JSON bigint back to bigint primitive
 			else {
+				assert(value.value > Number.MAX_SAFE_INTEGER || value.value < Number.MIN_SAFE_INTEGER);
 				return [ key, BigInt(value.value) + BigInt(value.diff) ];
 			}
 		}));
@@ -188,4 +199,24 @@ test("non default nvs partition", async () => {
 	await nvs.fetchPartition("nvs2");
 	await nvs.all();
 	firmware_assert_nvs(nvs_config2, nvs);
+});
+
+// Ensures constructor with serial port creates ESPLoader using serial port
+test("serial port NVS constructor argument", () => {
+	let called = false;
+	const port = new SerialPort();
+	port.getInfo = () => {
+		called = true;
+		return {};
+	};
+	const nvs = new NVS(port);
+	assert(called);
+});
+
+// Ensures wrong type of argument is rejected by typescript
+test("NVS constructor wrong or missing argument", () => {
+	// @ts-expect-error
+	assert.throws(() => new NVS());
+	// @ts-expect-error
+	new NVS({});
 });
