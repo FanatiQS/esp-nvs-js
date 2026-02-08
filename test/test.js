@@ -5,11 +5,10 @@
 import assert from "node:assert";
 import test from "node:test";
 
-import { createLoader } from "./loader.js";
+import { loader_from_map } from "./loader.js";
 import { NVS } from "../src/nvs.js";
 import { firmware_generate, firmware_assemble, firmware_assert, firmware_assert_nvs } from "./firmware.js";
 import "./stub_serialport.js";
-import { firmware_generate_partitions } from "./firmware_generate.js";
 
 // NVS configuration data
 const nvs_config = {
@@ -79,26 +78,8 @@ await firmware_generate([
 ]);
 
 // Creates loader using generated firmware buffer
-const loader = createLoader(await firmware_assemble());
-
-/**
- * Creates a loader that asserts every page was requested
- * @param {Uint8Array} firmware
- * @param {{ addr: number, size: number }[]} partitions
- */
-function createLoaderAssertPartitions(firmware, partitions) {
-	let offset = 0;
-	return createLoader(firmware.buffer, (addr, size) => {
-		const partition = partitions[0];
-		assert(addr === (partition.addr + offset));
-		offset += size;
-		assert(offset <= partition.size);
-		if (offset === partition.size) {
-			partitions.shift();
-			offset = 0;
-		}
-	});
-}
+const loader_map = await firmware_assemble();
+const loader = loader_from_map(loader_map);
 
 
 
@@ -107,17 +88,58 @@ test("JSON not support BigInt", () => {
 	assert.throws(() => JSON.stringify(1n));
 });
 
-// Assert that all NVS pages in manually specified partition are requested
-test("all pages requested", async () => {
+// Assert that all pages in manually specified NVS partition are requested
+test("set pages assert all requested", async () => {
 	const addr = 0x9000;
 	const size = 0x4000;
-	const partitions = [ { addr, size } ];
-	const firmware = new Uint8Array(addr + size);
-	firmware.fill(0xff);
-	const nvs = new NVS(createLoaderAssertPartitions(firmware, partitions));
+	const page_size = 0x1000;
+
+	// Creates loader map with partition table that should not be read
+	/** @type {test_loader_map} */
+	const loader_map = new Map();
+	const partition_table = { read: false, data: new Uint8Array(0) };
+	loader_map.set(0x8000, partition_table);
+
+	// Adds NVS pages to loader map
+	const nvs_pages = [];
+	for (let i = 0; i < size; i += page_size) {
+		const page_data = new Uint8Array(page_size);
+		page_data.fill(0xff);
+		const page = { read: false, data: page_data };
+		nvs_pages.push(page);
+		loader_map.set(addr + i, page);
+	}
+
+	// Reads manually specified partition
+	const nvs = new NVS(loader_from_map(loader_map));
 	nvs.setPartition(addr, size);
 	await nvs.next();
-	assert(partitions.length === 0);
+
+	// Asserts that all default NVS pages were read and nothing else
+	assert(!partition_table.read);
+	for (const page of nvs_pages) {
+		assert(page.read);
+	}
+});
+
+// Asserts that all pages in default NVS partition are requested
+test("fetch pages assert all requested", async () => {
+	// Clears read flag from previous tests
+	for (const entry of loader_map.values()) {
+		entry.read = false;
+	}
+
+	// Reads default partition
+	const nvs = new NVS(loader);
+	await nvs.fetchPartition();
+	await nvs.all();
+
+	// Asserts that all default NVS pages were read along with partition table but nothing else
+	for (const entry of loader_map.values()) {
+		if (!entry.name || entry.name === "nvs") {
+			assert(entry.read);
+		}
+	}
 });
 
 // Asserts iterator data is identical to configuration used to create it
@@ -166,21 +188,4 @@ test("non default nvs partition", async () => {
 	await nvs.fetchPartition("nvs2");
 	await nvs.all();
 	firmware_assert_nvs(nvs_config2, nvs);
-});
-
-// Asserts that all existing NVS pages are requested with correct address and size
-test("pages from partition table", async () => {
-	const partitions = [
-		{ addr: 0x8000, size: 0xc00 },
-		{ addr: 0x9000, size: 0x2000 },
-		{ addr: 0x10000, size: 0x3000 }
-	];
-	const firmware = firmware_generate_partitions([
-		{ type: 0x0102, size: 0x2000, name: "foo" },
-		{ type: 0x0000, size: 0x5000, name: "bar" },
-		{ type: 0x0102, size: 0x3000, name: "baz" }
-	], 0x8000);
-	const nvs = new NVS(createLoaderAssertPartitions(firmware, partitions));
-	await nvs.next();
-	assert(partitions.length === 0);
 });

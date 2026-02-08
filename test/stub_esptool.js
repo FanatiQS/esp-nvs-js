@@ -1,14 +1,11 @@
 // @ts-check
 
 import { ESPLoader } from "../src/esptool.js";
-import { Loader } from "./loader.js";
 
 /**
- * @typedef {{loader:Loader?}} ESPLoaderStub
  * @typedef {import("esptool-js").ROM} ROM
+ * @typedef {{ buf?: ArrayBuffer, chip?: ROM }} ESPLoaderStub
  */
-
-
 
 // Global variable to set the path of the firmware file to fetch
 globalThis.ESPLoaderStubFilePath = "/nvs.bin";
@@ -26,25 +23,29 @@ for (const key of Object.getOwnPropertyNames(ESPLoader.prototype)) {
  * @this {ESPLoaderStub}
  */
 ESPLoader.prototype.readFlash = async function (addr, size) {
-	if (!this.loader) {
+	// Ensures loader was connected before reading flash
+	if (!this.buf) {
 		throw new Error("Loader not connected");
 	}
-	return this.loader.readFlash(addr, size);
+
+	// Returns requested slice from buffer
+	return new Uint8Array(this.buf.slice(addr, addr + size));
 };
 
 /**
  * @this {ESPLoaderStub}
  */
 ESPLoader.prototype.connect = async function () {
-	if (!this.loader) {
-		const response = await fetch(ESPLoaderStubFilePath);
-		this.loader = new Loader(await response.arrayBuffer());
+	if (this.buf) {
+		throw new Error("Loader already open");
 	}
-	this.loader.connect();
+	const response = await fetch(ESPLoaderStubFilePath);
+	this.buf = await response.arrayBuffer();
 };
 
 ESPLoader.prototype.runStub = async function () {
-	return /** @type {ROM} */({});
+	this.chip = /** @type {ROM} */({});
+	return this.chip;
 };
 
 ESPLoader.prototype.info = function () {

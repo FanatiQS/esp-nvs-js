@@ -109,35 +109,29 @@ export async function firmware_assemble(work_dir=default_dir) {
 	const partition_table_csv_script = `$IDF_PATH/components/partition_table/gen_esp32part.py ${partition_table_bin_path}`;
 	const { stdout: partition_table_csv_data } = await python(partition_table_csv_script);
 
-	// Gets total size required from partition table and get NVS partition file
-	let total_size = 0;
-	const partitions = [];
+	// Creates table with partition table region
+	/** @type {test_loader_map} */
+	const loader_map = new Map();
+	loader_map.set(0x8000, { read: false, data: new Uint8Array(partition_table_bin_data) });
+
+	// Registers NVS partitions pages in table
 	for (const [ name, type, subtype, addr, size ] of csv_parse(partition_table_csv_data, { comment: "#" })) {
-		// Gets total buffer size required for firmware
-		const size_parsed = parse_int(size);
-		const addr_parsed = parse_int(addr);
-		if (total_size <= addr_parsed) {
-			total_size = addr_parsed + size_parsed;
-		}
-
-		// Gets generated NVS binary
 		if (type === "data" && subtype === "nvs") {
-			partitions.push({
-				addr: addr_parsed,
-				path: `${work_dir}/${name}.bin`
-			});
+			const page_size = 0x1000;
+			const addr_parsed = parse_int(addr);
+			const nvs_bin_data = await readFile(`${work_dir}/${name}.bin`);
+			assert(nvs_bin_data.byteLength === parse_int(size));
+			for (let i = 0; i < nvs_bin_data.byteLength; i += page_size) {
+				loader_map.set(addr_parsed + i, {
+					name: name,
+					read: false,
+					data: new Uint8Array(nvs_bin_data.buffer, i, page_size)
+				});
+			}
 		}
 	}
 
-	// Assembles all binary files into a single firmware buffer
-	const firmware = new Uint8Array(total_size);
-	firmware.fill(0xff);
-	firmware.set(partition_table_bin_data, 0x8000);
-	for (const { addr, path } of partitions) {
-		firmware.set(await readFile(path), addr);
-	}
-
-	return firmware.buffer;
+	return loader_map;
 }
 
 /**
