@@ -63,7 +63,7 @@ export async function firmware_generate(partitions, work_dir=default_dir) {
 				nvs_csv.write(`${namespace},namespace,,\n`);
 				for (let { key, type, value } of nvs_entries) {
 					// Type for blob is optional
-					if (value instanceof Uint8Array) {
+					if (ArrayBuffer.isView(value)) {
 						value = Buffer.from(value).toString("hex");
 						type = "hex2bin";
 					}

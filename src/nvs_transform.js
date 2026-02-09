@@ -22,7 +22,7 @@ export function nvs_transform_json(cache) {
 		output[namespace] = entries;
 		for (const [ key, value ] of nvs_iterate_value(cache, ns)) {
 			// Converts array buffer to plain array
-			if (value instanceof Uint8Array) {
+			if (ArrayBuffer.isView(value)) {
 				entries[key] = Array.from(value);
 			}
 			// Converts bigint to object representation to be JSON.stringify safe
