@@ -4,11 +4,11 @@
 
 export class Loader {
 	/**
-	 * @param {test_loader_map} loader_map
+	 * @param {test_page_map} page_map
 	 */
-	constructor(loader_map) {
+	constructor(page_map) {
 		this.connected = false;
-		this.loader_map = loader_map;
+		this.page_map = page_map;
 	}
 
 	/**
@@ -22,7 +22,7 @@ export class Loader {
 		}
 
 		// Ensures requested region exists
-		const page = this.loader_map.get(addr);
+		const page = this.page_map.get(addr);
 		if (!page) {
 			throw new Error(`Firmware buffer does not contain requested page: 0x${addr.toString(16)}`);
 		}
@@ -44,7 +44,7 @@ export class Loader {
 }
 
 /**
- * @param {test_loader_map} loader_map
+ * @param {test_page_map} loader_map
  */
 export function loader_from_map(loader_map) {
 	return /** @type {import("esptool-js").ESPLoader} */(/** @type {unknown} */(new Loader(loader_map)));

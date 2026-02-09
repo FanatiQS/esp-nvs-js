@@ -95,8 +95,8 @@ await firmware_generate([
 ]);
 
 // Creates loader using generated firmware buffer
-const loader_map = await firmware_assemble();
-const loader = loader_from_map(loader_map);
+const page_map = await firmware_assemble();
+const loader = loader_from_map(page_map);
 
 
 
@@ -118,10 +118,10 @@ test("set pages assert all requested", async () => {
 	const page_size = 0x1000;
 
 	// Creates loader map with partition table that should not be read
-	/** @type {test_loader_map} */
-	const loader_map = new Map();
+	/** @type {test_page_map} */
+	const page_map = new Map();
 	const partition_table = { read: false, data: new Uint8Array(0) };
-	loader_map.set(0x8000, partition_table);
+	page_map.set(0x8000, partition_table);
 
 	// Adds NVS pages to loader map
 	const nvs_pages = [];
@@ -130,11 +130,11 @@ test("set pages assert all requested", async () => {
 		page_data.fill(0xff);
 		const page = { read: false, data: page_data };
 		nvs_pages.push(page);
-		loader_map.set(addr + i, page);
+		page_map.set(addr + i, page);
 	}
 
 	// Reads manually specified partition
-	const nvs = new NVS(loader_from_map(loader_map));
+	const nvs = new NVS(loader_from_map(page_map));
 	nvs.setPartition(addr, size);
 	await nvs.next();
 
@@ -148,7 +148,7 @@ test("set pages assert all requested", async () => {
 // Asserts that all pages in default NVS partition are requested
 test("fetch pages assert all requested", async () => {
 	// Clears read flag from previous tests
-	for (const entry of loader_map.values()) {
+	for (const entry of page_map.values()) {
 		entry.read = false;
 	}
 
@@ -159,7 +159,7 @@ test("fetch pages assert all requested", async () => {
 	await nvs.all();
 
 	// Asserts that all default NVS pages were read along with partition table but nothing else
-	for (const entry of loader_map.values()) {
+	for (const entry of page_map.values()) {
 		if (!entry.name || entry.name === "nvs") {
 			assert(entry.read);
 		}

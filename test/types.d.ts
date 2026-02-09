@@ -26,4 +26,4 @@ declare interface test_nvs_compare {
 	}
 }
 
-declare type test_loader_map = Map<number, { name?: string, read: boolean, data: Uint8Array }>;
+declare type test_page_map = Map<number, { name?: string, read: boolean, data: Uint8Array }>;

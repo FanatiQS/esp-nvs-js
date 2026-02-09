@@ -110,9 +110,9 @@ export async function firmware_assemble(work_dir=default_dir) {
 	const { stdout: partition_table_csv_data } = await python(partition_table_csv_script);
 
 	// Creates table with partition table region
-	/** @type {test_loader_map} */
-	const loader_map = new Map();
-	loader_map.set(0x8000, { read: false, data: new Uint8Array(partition_table_bin_data) });
+	/** @type {test_page_map} */
+	const page_map = new Map();
+	page_map.set(0x8000, { read: false, data: new Uint8Array(partition_table_bin_data) });
 
 	// Registers NVS partitions pages in table
 	for (const [ name, type, subtype, addr, size ] of csv_parse(partition_table_csv_data, { comment: "#" })) {
@@ -122,7 +122,7 @@ export async function firmware_assemble(work_dir=default_dir) {
 			const nvs_bin_data = await readFile(`${work_dir}/${name}.bin`);
 			assert(nvs_bin_data.byteLength === parse_int(size));
 			for (let i = 0; i < nvs_bin_data.byteLength; i += page_size) {
-				loader_map.set(addr_parsed + i, {
+				page_map.set(addr_parsed + i, {
 					name: name,
 					read: false,
 					data: new Uint8Array(nvs_bin_data.buffer, i, page_size)
@@ -131,7 +131,7 @@ export async function firmware_assemble(work_dir=default_dir) {
 		}
 	}
 
-	return loader_map;
+	return page_map;
 }
 
 /**
