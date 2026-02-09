@@ -143,6 +143,7 @@ export function firmware_assert(nvs_config, nvs_cmp) {
 	/** @type {test_nvs_compare} */
 	const nvs_config_cmp = {};
 	for (const [ namespace, entries ] of Object.entries(nvs_config)) {
+		if (!entries.length) continue;
 		nvs_config_cmp[namespace] = Object.fromEntries(entries.map(({ key, value }) => [ key, value ]));
 	}
 	assert.deepStrictEqual(nvs_config_cmp, nvs_cmp);

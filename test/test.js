@@ -63,7 +63,8 @@ const nvs_config = {
 	"extra": [
 		{ key: "u64-unsafe", type: "u64", value: 2n ** 63n - 512n },
 		{ key: "duplicate", type: "u8", value: 1 }
-	]
+	],
+	"empty": []
 };
 
 // Alternative NVS configuration data
@@ -78,7 +79,19 @@ await firmware_generate([
 	{ name: "phy_init", type: "data", subtype: "phy", size: 0x1000 },
 	{ name: "nvs", type: "data", subtype: "nvs", size: 0x6000, data: nvs_config },
 	{ name: "factory", type: "app", subtype: "factory", size: 0x10000 },
-	{ name: "nvs2", type: "data", subtype: "nvs", size: 0x6000, data: nvs_config2 }
+	{ name: "nvs2", type: "data", subtype: "nvs", size: 0x4000, data: nvs_config2 },
+	{ name: "duplicate-keys", type: "data", subtype: "nvs", size: 0x4000, data: {
+		"foo": [
+			{ key: "bar", type: "u8", value: 1 },
+			{ key: "bar", type: "i16", value: 2 }
+		]
+	}},
+	{ name: "blob-data-on-str", type: "data", subtype: "nvs", size: 0x4000, data: {
+		"foo": [
+			{ key: "bar", value: "I am a string" },
+			{ key: "bar", value: new Uint8Array(10) }
+		]
+	}}
 ]);
 
 // Creates loader using generated firmware buffer
@@ -160,6 +173,79 @@ test("parser", async () => {
 	firmware_assert_nvs(nvs_config, nvs);
 });
 
+// Searching for specified value
+test("search for value", async () => {
+	const nvs = new NVS(loader);
+	const value = await nvs.get("extra", "duplicate");
+	assert(value === 1);
+});
+
+// Searching for non existent namespace
+test("no existent namespace", async () => {
+	const nvs = new NVS(loader);
+	const value = await nvs.get("foo", "bar");
+	assert(value === null);
+});
+
+// Searching for non existent key
+test("no existent key", async () => {
+	const nvs = new NVS(loader);
+	const value = await nvs.get("extra", "foo");
+	assert(value === null);
+});
+
+// Searching for key in empty namespace
+test("empty namespace", async () => {
+	const nvs = new NVS(loader);
+	const value = await nvs.get("empty", "foo");
+	assert(value === null);
+});
+
+// Searches for NVS partition by name without success
+test("missing nvs partition", async () => {
+	const nvs = new NVS(loader);
+	const found = await nvs.fetchPartition("no-exist");
+	assert(found === false);
+});
+
+// Reject multiple keys in the same namespace
+test("duplicate keys", async () => {
+	const nvs = new NVS(loader);
+	const found = await nvs.fetchPartition("duplicate-keys");
+	assert(found);
+	await assert.rejects(async () => await nvs.all());
+});
+
+// Not allowed to set partition when already defined
+test("no double set partition", async () => {
+	const nvs = new NVS(loader);
+	nvs.setPartition(0x9000, 0x6000);
+	assert.throws(() => nvs.setPartition(0x9000, 0x6000));
+});
+
+// Not allowed to fetch partition when already defined
+test("no double fetch partition", async () => {
+	const nvs = new NVS(loader);
+	const found = await nvs.fetchPartition();
+	assert(found);
+	await assert.rejects(async () => nvs.fetchPartition());
+});
+
+// Reject blob data entry uses the same key as entry with other data type
+test("blob data collide with string", async () => {
+	const nvs = new NVS(loader);
+	const found = await nvs.fetchPartition("blob-data-on-str");
+	assert(found);
+	await assert.rejects(async () => await nvs.all());
+})
+
+// Parsing should do nothing if it has already parsed to the end
+test("nothing after complete", async () => {
+	const nvs = new NVS(loader);
+	await nvs.all();
+	await nvs.all();
+});
+
 // Asserts that output from .toJSON can be serialized
 test("JSON serializable", async () => {
 	const nvs = new NVS(loader);
@@ -174,8 +260,10 @@ test("parsed JSON", async () => {
 
 	/** @type {test_nvs_compare} */
 	const cmp_json = {};
-	for (const [ namespace, entries ] of Object.entries(nvs.toJSON())) {
-		cmp_json[namespace] = Object.fromEntries(Object.entries(entries).map(([ key, value]) => {
+	for (const [ namespace, object ] of Object.entries(nvs.toJSON())) {
+		const entries = Object.entries(object);
+		if (!entries.length) continue;
+		cmp_json[namespace] = Object.fromEntries(entries.map(([ key, value]) => {
 			// No conversion needed
 			if (typeof value !== "object") {
 				return [ key, value ];
