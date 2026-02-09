@@ -2,6 +2,8 @@
 
 /// <reference path="./types.d.ts" />
 
+import assert from "node:assert";
+
 export class Loader {
 	/**
 	 * @param {test_page_map} page_map
@@ -17,18 +19,15 @@ export class Loader {
 	 */
 	async readFlash(addr, size) {
 		// Ensures loader was connected before reading flash
-		if (this.connected === false) {
-			throw new Error("Loader not connected");
-		}
+		assert(this.connected, "Loader not connected");
 
 		// Ensures requested region exists
 		const page = this.page_map.get(addr);
-		if (!page) {
-			throw new Error(`Firmware buffer does not contain requested page: 0x${addr.toString(16)}`);
-		}
-		if (page.data.byteLength !== size) {
-			throw new Error(`Firmware buffer is not of the expected size: ${page.data.byteLength.toString(16)}, ${size.toString(16)}`);
-		}
+		assert(page, `Firmware buffer does not contain requested page: 0x${addr.toString(16)}`);
+		assert(
+			page.data.byteLength === size,
+			`Firmware buffer is not of the expected size: ${page.data.byteLength.toString(16)}, ${size.toString(16)}`
+		);
 
 		// Sets read flag to indicate this page was read
 		page.read = true;
