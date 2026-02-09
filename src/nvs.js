@@ -81,7 +81,7 @@ export class NVS {
 			if (!this.addr_list.length) {
 				await this.fetchPartition();
 				if (!this.addr_list.length) {
-					throw new Error("No NVS partitions found");
+					throw new Error("NVS partition not found");
 				}
 			}
 
