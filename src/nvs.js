@@ -72,6 +72,11 @@ export class NVS {
 	async next() {
 		// Reads first NVS page if not yet read
 		if (!this.page) {
+			// Exits early if there is no page because parser has completed
+			if (this.cache.length > 1 || this.cache[0].size > 0) {
+				return null;
+			}
+
 			// Connects to device if not already connected
 			if (!this.loader.chip) {
 				await this.connect();
@@ -79,8 +84,7 @@ export class NVS {
 
 			// Fetches NVS partitions automatically if no partitions have been added
 			if (!this.addr_list.length) {
-				await this.fetchPartition();
-				if (!this.addr_list.length) {
+				if (!await this.fetchPartition()) {
 					throw new Error("NVS partition not found");
 				}
 			}
@@ -120,9 +124,9 @@ export class NVS {
 				return null;
 			}
 		}
-		const ns = /** @type {number} */(entry.value);
 
 		// Ensures namespace exists
+		const ns = /** @type {number} */(entry.value);
 		while (!this.cache[ns]) {
 			if (!await this.next()) {
 				return null;
