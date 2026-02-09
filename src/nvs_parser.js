@@ -230,6 +230,7 @@ function nvs_entry_parse(page, cache) {
 				// Finalizes single chunk blob by using buffer without copying
 				if (entry.chunks.info && entry.chunks.info.count === 1) {
 					entry.value = chunk;
+					entry.chunks = null;
 					return entry;
 				}
 
@@ -282,6 +283,7 @@ function nvs_entry_parse(page, cache) {
 				entry.chunks.len++;
 				if (entry.chunks.len === info.count) {
 					entry.value = nvs_chunks_assemble(info, entry.chunks);
+					entry.chunks = null;
 					return entry;
 				}
 
