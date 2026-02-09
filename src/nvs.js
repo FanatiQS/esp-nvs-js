@@ -60,7 +60,7 @@ export class NVS {
 		}
 
 		// Fetches page addresses of NVS partition
-		await nvs_page_lookup(this.loader, this.addr_list, partitionName, addr);
+		return nvs_page_lookup(this.loader, this.addr_list, partitionName, addr);
 	}
 
 

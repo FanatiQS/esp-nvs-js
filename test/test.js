@@ -141,7 +141,8 @@ test("fetch pages assert all requested", async () => {
 
 	// Reads default partition
 	const nvs = new NVS(loader);
-	await nvs.fetchPartition();
+	const found = await nvs.fetchPartition();
+	assert(found);
 	await nvs.all();
 
 	// Asserts that all default NVS pages were read along with partition table but nothing else
@@ -196,7 +197,8 @@ test("parsed JSON", async () => {
 // Asserts that specifying a non default NVS partition parses correct partition
 test("non default nvs partition", async () => {
 	const nvs = new NVS(loader);
-	await nvs.fetchPartition("nvs2");
+	const found = await nvs.fetchPartition("nvs2");
+	assert(found);
 	await nvs.all();
 	firmware_assert_nvs(nvs_config2, nvs);
 });

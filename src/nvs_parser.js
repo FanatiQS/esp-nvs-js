@@ -364,6 +364,7 @@ export function nvs_page_set(addr, len, addr_list) {
  * @param {number[]} addr_list Empty list of NVS page addresses to append the extracted addresses to
  * @param {string} [name] Partition name to get the page addresses for
  * @param {number} [addr] Address of the partition table
+ * @return Indicates if NVS partition was found or not
  */
 export async function nvs_page_lookup(loader, addr_list, name = "nvs", addr = 0x8000) {
 	// Reads partition table from device
@@ -383,9 +384,11 @@ export async function nvs_page_lookup(loader, addr_list, name = "nvs", addr = 0x
 			&& String.fromCharCode(...nvs_buffer_null_terminate(view.buffer, view.byteOffset + i + 12, 16)) === name
 		) {
 			nvs_page_set(view.getUint32(i + 4, true), view.getUint32(i + 8, true), addr_list);
-			break;
+			return true;
 		}
 	}
+
+	return false;
 }
 
 /**
