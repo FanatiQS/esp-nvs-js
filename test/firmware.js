@@ -82,7 +82,7 @@ export async function firmware_generate(partitions, work_dir=default_dir) {
 
 			// Generates NVS binary from CSV file
 			const nvs_bin_path = `${work_dir}/${name}.bin`;
-			const nvs_script_path = "$IDF_PATH/components/nvs_flash/nvs_partition_generator/nvs_partition_gen.py";
+			const nvs_script_path = `python -m esp_idf_nvs_partition_gen`;
 			await python(`${nvs_script_path} generate ${nvs_csv_path} ${nvs_bin_path} ${size}`);	
 		}
 	}
