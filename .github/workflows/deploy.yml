@@ -1,0 +1,32 @@
+name: Test
+
+on:
+    push:
+        branches:
+            - master
+
+jobs:
+    deploy:
+        runs-on: ubuntu-latest
+        permissions:
+            id-token: write
+            pages: write
+        steps:
+            - uses: actions/checkout@v6
+
+            - uses: erikyo/tsdoc-action@v1
+              with:
+                source_dir: ./src/*
+                output_dir: ./_site/docs
+
+            - run: cp -r ./examples ./_site/examples
+
+            - run: npm install
+            - run: NODE_OPTIONS="--test-reporter=lcov --test-reporter-destination=lcov.info --test-reporter=spec --test-reporter-destination=stdout" npm test
+            - run: npx lcov-badge2 lcov.info -l Coverage -o ./_site/coverage.svg
+              if: ${{ !cancelled() }}
+
+            - uses: actions/upload-pages-artifact@v4
+              if: ${{ !cancelled() }}
+            - uses: actions/deploy-pages@v4
+              if: ${{ !cancelled() }}
