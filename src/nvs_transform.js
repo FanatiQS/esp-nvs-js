@@ -5,7 +5,11 @@
 import { nvs_iterate_ns, nvs_iterate_value } from "./nvs_parser.js";
 
 /**
- * @typedef {{ type: "bigint", value: number, diff: number }} nvs_json_bigint
+ * @typedef {object} nvs_json_bigint
+ * @property {"bigint"} type
+ * @property {number} value
+ * @property {number} diff
+ *
  * @typedef {number|string|number[]|nvs_json_bigint} nvs_json_value
  */
 
