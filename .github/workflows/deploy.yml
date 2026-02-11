@@ -6,7 +6,7 @@ on:
             - master
 env:
     NODE_OPTIONS: --test-reporter=spec --test-reporter-destination=stdout --test-reporter=lcov --test-reporter-destination=lcov.info
-    IDF_PATH: $(pwd)/esp-idf
+    IDF_PATH: ${{ github.workspace }}/esp-idf
 
 jobs:
     deploy:
