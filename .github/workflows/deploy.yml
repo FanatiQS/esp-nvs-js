@@ -17,6 +17,7 @@ jobs:
         steps:
             - uses: actions/checkout@v6
             - run: npm install
+            - run: pip install esp_idf_nvs_partition_gen
             - run: git clone https://github.com/espressif/esp-idf.git
 
             - uses: erikyo/tsdoc-action@v1
