@@ -28,6 +28,7 @@ jobs:
                 output_dir: ./_site/docs
 
             - run: cp -r ./examples ./_site/examples
+            - run: cp -r ./src ./_site/src
 
             - run: npm test
             - run: npx lcov-badge2 lcov.info -l Coverage -o ./_site/coverage.svg
