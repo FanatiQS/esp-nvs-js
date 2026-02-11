@@ -1,5 +1,8 @@
 # ESP32 Non-Volatile Storage reader
 
+![Test](https://github.com/FanatiQS/esp-nvs-js/actions/workflows/deploy.yml/badge.svg)
+![Coverage](https://fanatiqs.github.io/esp-nvs-js/coverage.svg)
+
 A JavaScript browser library for reading ESP32 Non-Volatile Storage (NVS) entries over USB using WebSerial.
 
 ## Highlights
@@ -99,6 +102,9 @@ for (const [ namespace, key, value ] of nvs) {
 	console.log(namespace, key, value);
 }
 ```
+
+## API
+The API documentation is available [here](https://fanatiqs.github.io/esp-nvs-js/docs/modules/src.html).
 
 ## Limitations
 

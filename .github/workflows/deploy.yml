@@ -1,4 +1,6 @@
-name: Test
+# cspell: ignore lcov
+
+name: Tests
 
 on:
     push:
