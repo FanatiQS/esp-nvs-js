@@ -38,7 +38,7 @@ Local install is only required for full TypeScript types support.
 Import the library from CDN into your JavaScript code like this:
 
 ```js
-import { NVS } from "https://cdn.jsdelivr.net/gh/FanatiQS/esp-nvs-js@master/nvs.js";
+import { NVS } from "https://cdn.jsdelivr.net/gh/FanatiQS/esp-nvs-js@master/src/index.js";
 ```
 
 ### NPM
