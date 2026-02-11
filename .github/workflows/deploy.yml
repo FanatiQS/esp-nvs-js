@@ -21,7 +21,7 @@ jobs:
             - uses: actions/checkout@v6
             - run: npm install
             - run: pip install esp_idf_nvs_partition_gen
-            - run: curl -L ${{ $PARTITION_TABLE_SCRIPT_URL }} --create-dirs -o esp-idf/components/partition_table/gen_esp32part.py
+            - run: curl -L ${{ env.PARTITION_TABLE_SCRIPT_URL }} --create-dirs -o esp-idf/components/partition_table/gen_esp32part.py
 
             - uses: erikyo/tsdoc-action@v1
               with:
