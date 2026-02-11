@@ -104,7 +104,7 @@ for (const [ namespace, key, value ] of nvs) {
 ```
 
 ## API
-The API documentation is available [here](https://fanatiqs.github.io/esp-nvs-js/docs/modules/src.html).
+The API documentation is available [here](https://fanatiqs.github.io/esp-nvs-js/docs/modules.html).
 
 ## Limitations
 

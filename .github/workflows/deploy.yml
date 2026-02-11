@@ -1,4 +1,4 @@
-# cspell: ignore lcov
+# cspell: ignore lcov erikyo tsdoc
 
 name: Tests
 
@@ -24,7 +24,7 @@ jobs:
 
             - uses: erikyo/tsdoc-action@v1
               with:
-                source_dir: ./src/*
+                source_dir: ./src
                 output_dir: ./_site/docs
 
             - run: cp -r ./examples ./_site/examples
