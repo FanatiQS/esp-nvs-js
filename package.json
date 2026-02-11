@@ -14,6 +14,6 @@
 		"typescript": "^5.9.3"
 	},
 	"scripts": {
-		"test": "npx tsc && node --import ./test/import_hook.js ./test/test.js"
+		"test": "npx tsc && node --import ./test/import_hook.js --experimental-test-coverage --test ./test/test.js"
 	}
 }
