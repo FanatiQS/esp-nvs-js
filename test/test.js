@@ -311,6 +311,13 @@ test("out of order blob", async () => {
 	}
 });
 
+// Ensures entry is returned from .next between blob entry existing and it being assembled
+test("full value between blob chunks in search", async () => {
+	for await (const nvs of pages_reorder("reorder")) {
+		assert(ArrayBuffer.isView(await nvs.get("foo", "big")));
+	}
+});
+
 // Parsing should do nothing if it has already parsed to the end
 test("nothing after complete", async () => {
 	const nvs = new NVS(loader);
