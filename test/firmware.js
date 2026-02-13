@@ -15,6 +15,10 @@ const default_dir = `${import.meta.dirname}/generated`;
 // Runs a Python script
 const python = promisify(exec);
 
+// Gets path to installed and set up ESP-IDF SDK for python scripts
+const { IDF_PATH } = process.env;
+assert(IDF_PATH, "ESP-IDF not available");
+
 /**
  * Parses number represented as string
  * @param {string} input
@@ -92,7 +96,7 @@ export async function firmware_generate(partitions, work_dir=default_dir) {
 
 	// Generates partition table binary from CSV file
 	const partition_table_bin_path = `${work_dir}/partition_table.bin`;
-	const partition_table_bin_script = "python $IDF_PATH/components/partition_table/gen_esp32part.py";
+	const partition_table_bin_script = `python ${IDF_PATH}/components/partition_table/gen_esp32part.py`;
 	await python(`${partition_table_bin_script} ${partition_table_csv_path} ${partition_table_bin_path}`);
 }
 
@@ -106,7 +110,7 @@ export async function firmware_assemble(work_dir=default_dir) {
 	const partition_table_bin_data = await readFile(partition_table_bin_path);
 
 	// Generates partition table CSV from binary containing calculated address for each partition
-	const partition_table_csv_script = `python $IDF_PATH/components/partition_table/gen_esp32part.py ${partition_table_bin_path}`;
+	const partition_table_csv_script = `python ${IDF_PATH}/components/partition_table/gen_esp32part.py ${partition_table_bin_path}`;
 	const { stdout: partition_table_csv_data } = await python(partition_table_csv_script);
 
 	// Creates table with partition table region
