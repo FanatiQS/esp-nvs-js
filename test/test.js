@@ -14,6 +14,52 @@ import "./stub_serialport.js";
 // Prevents ESPLoader from printing to the console
 ESPLoader.prototype.write = () => {};
 
+/**
+ * Goes through every page order permutation in partition
+ * @param {string} partition_name
+ */
+async function* pages_reorder(partition_name) {
+	/** @type {test_page_map} */
+	const page_map_copy = new Map();
+
+	// Deep copies page map for modification
+	for (const [ addr, page ] of page_map) {
+		if (page.name === partition_name) {
+			page_map_copy.set(addr, { ...page });
+		}
+	}
+	const nvs_pages = Array.from(page_map_copy.values());
+
+	// Adds partition table to page map copy
+	const partition_table_map_entry = page_map.get(0x8000);
+	assert(partition_table_map_entry);
+	page_map_copy.set(0x8000, partition_table_map_entry);
+
+	// Goes through all NVS page order permutations
+	const counters = new Array(nvs_pages.length).fill(0);
+	let i = 1;
+	while (i < nvs_pages.length) {
+		if (counters[i] < i) {
+			const j = i % 2 && counters[i];
+			const temp = nvs_pages[i].data;
+			nvs_pages[i].data = nvs_pages[j].data;
+			nvs_pages[j].data = temp;
+			counters[i]++;
+			i = 1;
+
+			// Instantiates NVS parser with page map permutation
+			const nvs = new NVS(loader_from_map(page_map_copy));
+			const found = await nvs.fetchPartition(partition_name);
+			assert(found);
+			yield nvs;
+		}
+		else {
+			counters[i] = 0;
+			i++;
+		}
+	}
+}
+
 // NVS configuration data
 const nvs_config = {
 	"uint-max": [
@@ -74,24 +120,37 @@ const nvs_config2 = {
 	]
 };
 
+// Usable space left in NVS page when accounting for page header, entry state bitmap and entry header
+const nvs_page_usable_space = 0x1000 - 64 - 32;
+
+// Blobs aligned so index and chunks always lands on a separate pages
+const nvs_config_reorder = {
+	"foo": [
+		{ key: "small", value: new Uint8Array(nvs_page_usable_space - 32).map((value, index) => index) }, // single chunk
+		{ key: "big", value: new Uint8Array(nvs_page_usable_space * 2 - 32).map((value, index) => index) } // multiple chunks
+	]
+}
+
 // Generates firmware buffer
 await firmware_generate([
 	{ name: "phy_init", type: "data", subtype: "phy", size: 0x1000 },
 	{ name: "nvs", type: "data", subtype: "nvs", size: 0x6000, data: nvs_config },
 	{ name: "factory", type: "app", subtype: "factory", size: 0x10000 },
 	{ name: "nvs2", type: "data", subtype: "nvs", size: 0x4000, data: nvs_config2 },
-	{ name: "duplicate-keys", type: "data", subtype: "nvs", size: 0x4000, data: {
+	{ name: "duplicate-keys", type: "data", subtype: "nvs", size: 0x3000, data: {
 		"foo": [
 			{ key: "bar", type: "u8", value: 1 },
 			{ key: "bar", type: "i16", value: 2 }
 		]
 	}},
-	{ name: "blob-data-on-str", type: "data", subtype: "nvs", size: 0x4000, data: {
+	{ name: "blob-data-on-str", type: "data", subtype: "nvs", size: 0x5000, data: {
 		"foo": [
-			{ key: "bar", value: "I am a string" },
-			{ key: "bar", value: new Uint8Array(10) }
+			{ key: "baz", value: "0".repeat(nvs_page_usable_space - 1 - 32) }, // string filling to end of page
+			{ key: "bar", value: 1, type: "u8" }, // dummy data since string can for some reason not fill page by itself
+			{ key: "baz", value: new Uint8Array(nvs_page_usable_space).map((value, index) => index) } // blob with data and index in separate pages
 		]
-	}}
+	}},
+	{ name: "reorder", type: "data", subtype: "nvs", size: 0x5000, data: nvs_config_reorder }
 ]);
 
 // Creates loader using generated firmware buffer
@@ -231,13 +290,28 @@ test("no double fetch partition", async () => {
 	await assert.rejects(async () => nvs.fetchPartition());
 });
 
-// Reject blob data entry uses the same key as entry with other data type
+// Reject blob data entry that uses the same key as entry with other data type
 test("blob data collide with string", async () => {
 	const nvs = new NVS(loader);
 	const found = await nvs.fetchPartition("blob-data-on-str");
 	assert(found);
 	await assert.rejects(async () => await nvs.all());
 })
+
+// Reject blob index entry that uses the same key as entry with other data type
+test("blob index collide with string", async () => {
+	for await (const nvs of pages_reorder("blob-data-on-str")) {
+		await assert.rejects(async () => await nvs.all());
+	}
+});
+
+// Ensures blob data received in different orders is still handled correctly
+test("out of order blob", async () => {
+	for await (const nvs of pages_reorder("reorder")) {
+		await nvs.all();
+		firmware_assert_nvs(nvs_config_reorder, nvs);
+	}
+});
 
 // Parsing should do nothing if it has already parsed to the end
 test("nothing after complete", async () => {
