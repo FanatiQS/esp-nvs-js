@@ -185,9 +185,7 @@ test("set pages assert all requested", async () => {
 	// Adds NVS pages to loader map
 	const nvs_pages = [];
 	for (let i = 0; i < size; i += page_size) {
-		const page_data = new Uint8Array(page_size);
-		page_data.fill(0xff);
-		const page = { read: false, data: page_data };
+		const page = { read: false, data: new Uint8Array(page_size).fill(0xff) };
 		nvs_pages.push(page);
 		page_map.set(addr + i, page);
 	}
@@ -363,6 +361,15 @@ test("non default nvs partition", async () => {
 	assert(found);
 	await nvs.all();
 	firmware_assert_nvs(nvs_config2, nvs);
+});
+
+// Asserts empty partition table fails
+test("empty partition table", async () => {
+	const page_map = new Map();
+	page_map.set(0x8000, { read: false, data: new Uint8Array(0xc00).fill(0xff) });
+	const nvs = new NVS(loader_from_map(page_map));
+	assert(!await nvs.fetchPartition());
+	await assert.rejects(async () => await nvs.all());
 });
 
 // Ensures constructor with serial port creates ESPLoader using serial port
