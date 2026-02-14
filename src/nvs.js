@@ -1,7 +1,7 @@
 // @ts-check
 
 import { ESPLoader } from "./esptool.js";
-import { nvs_page_set, nvs_page_lookup, nvs_page_next, nvs_entry_next, nvs_iterate } from "./nvs_parser.js";
+import { nvs_pages_set, nvs_pages_lookup, nvs_pages_next, nvs_entry_next, nvs_iterate } from "./nvs_parser.js";
 import { nvs_transform_json, nvs_transform_html } from "./nvs_transform.js";
 
 export class NVS {
@@ -44,7 +44,7 @@ export class NVS {
 	 * @param {number} len Size of the NVS partition
 	 */
 	setPartition(addr, len) {
-		nvs_page_set(addr, len, this.addr_list);
+		nvs_pages_set(addr, len, this.addr_list);
 	}
 
 	/**
@@ -60,7 +60,7 @@ export class NVS {
 		}
 
 		// Fetches page addresses of NVS partition
-		return nvs_page_lookup(this.loader, this.addr_list, partitionName, addr);
+		return nvs_pages_lookup(this.loader, this.addr_list, partitionName, addr);
 	}
 
 
@@ -90,7 +90,7 @@ export class NVS {
 			}
 
 			// Reads first NVS page containing data
-			this.page = await nvs_page_next(this.loader, this.addr_list);
+			this.page = await nvs_pages_next(this.loader, this.addr_list);
 			if (!this.page) {
 				return null;
 			}
@@ -102,7 +102,7 @@ export class NVS {
 			if (entry) {
 				return entry;
 			}
-			this.page = await nvs_page_next(this.loader, this.addr_list);
+			this.page = await nvs_pages_next(this.loader, this.addr_list);
 		} while (this.page);
 		return null;
 	}

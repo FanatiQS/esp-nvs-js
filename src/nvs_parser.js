@@ -348,7 +348,7 @@ export function nvs_entry_next(page, cache) {
  * @param {number} len Size of the NVS partition
  * @param {number[]} addr_list Empty list of NVS page addresses to add the extracted addresses to
  */
-export function nvs_page_set(addr, len, addr_list) {
+export function nvs_pages_set(addr, len, addr_list) {
 	// Requires address list to be empty before adding new pages
 	if (addr_list.length !== 0) {
 		throw new Error("Partition already set");
@@ -368,7 +368,7 @@ export function nvs_page_set(addr, len, addr_list) {
  * @param {number} [addr] Address of the partition table
  * @return Indicates if NVS partition was found or not
  */
-export async function nvs_page_lookup(loader, addr_list, name = "nvs", addr = 0x8000) {
+export async function nvs_pages_lookup(loader, addr_list, name = "nvs", addr = 0x8000) {
 	// Reads partition table from device
 	const data = await loader.readFlash(addr, PARTITION_TABLE_SIZE);
 	const view = new DataView(data.buffer);
@@ -385,7 +385,7 @@ export async function nvs_page_lookup(loader, addr_list, name = "nvs", addr = 0x
 			&& view.getUint32(i + 28) === 0x00000000
 			&& String.fromCharCode(...nvs_buffer_null_terminate(view.buffer, view.byteOffset + i + 12, 16)) === name
 		) {
-			nvs_page_set(view.getUint32(i + 4, true), view.getUint32(i + 8, true), addr_list);
+			nvs_pages_set(view.getUint32(i + 4, true), view.getUint32(i + 8, true), addr_list);
 			return true;
 		}
 	}
@@ -399,7 +399,7 @@ export async function nvs_page_lookup(loader, addr_list, name = "nvs", addr = 0x
  * @param {number[]} addr_list Address list to get the next page address from
  * @returns {Promise<nvs_page|null>}
  */
-export async function nvs_page_next(loader, addr_list) {
+export async function nvs_pages_next(loader, addr_list) {
 	/** @type {number|undefined} */
 	let addr;
 	while ((addr = addr_list.shift())) {
