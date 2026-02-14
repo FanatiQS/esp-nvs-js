@@ -159,17 +159,6 @@ const loader = loader_from_map(page_map);
 
 
 
-// Currently BigInts are not supported in JSON
-test("JSON not support BigInt", () => {
-	assert.throws(() => JSON.stringify(1n));
-});
-
-// Asserts that a type cast used in the NVS constructor is still required
-test("internal cast required", () => {
-	// @ts-expect-error
-	new ESPLoader({ port: new SerialPort() });
-});
-
 // Assert that all pages in manually specified NVS partition are requested
 test("set pages assert all requested", async () => {
 	const addr = 0x9000;
@@ -223,6 +212,24 @@ test("fetch pages assert all requested", async () => {
 	}
 });
 
+// Asserts that specifying a non default NVS partition parses correct partition
+test("non default nvs partition", async () => {
+	const nvs = new NVS(loader);
+	const found = await nvs.fetchPartition("nvs2");
+	assert(found);
+	await nvs.all();
+	firmware_assert_nvs(nvs_config2, nvs);
+});
+
+// Searches for NVS partition by name without success
+test("missing nvs partition", async () => {
+	const nvs = new NVS(loader);
+	const found = await nvs.fetchPartition("no-exist");
+	assert(found === false);
+});
+
+
+
 // Asserts iterator data is identical to configuration used to create it
 test("parser", async () => {
 	const nvs = new NVS(loader);
@@ -258,51 +265,6 @@ test("empty namespace", async () => {
 	assert(value === null);
 });
 
-// Searches for NVS partition by name without success
-test("missing nvs partition", async () => {
-	const nvs = new NVS(loader);
-	const found = await nvs.fetchPartition("no-exist");
-	assert(found === false);
-});
-
-// Reject multiple keys in the same namespace
-test("duplicate keys", async () => {
-	const nvs = new NVS(loader);
-	const found = await nvs.fetchPartition("duplicate-keys");
-	assert(found);
-	await assert.rejects(async () => await nvs.all());
-});
-
-// Not allowed to set partition when already defined
-test("no double set partition", async () => {
-	const nvs = new NVS(loader);
-	nvs.setPartition(0x9000, 0x6000);
-	assert.throws(() => nvs.setPartition(0x9000, 0x6000));
-});
-
-// Not allowed to fetch partition when already defined
-test("no double fetch partition", async () => {
-	const nvs = new NVS(loader);
-	const found = await nvs.fetchPartition();
-	assert(found);
-	await assert.rejects(async () => nvs.fetchPartition());
-});
-
-// Reject blob data entry that uses the same key as entry with other data type
-test("blob data collide with string", async () => {
-	const nvs = new NVS(loader);
-	const found = await nvs.fetchPartition("blob-data-on-str");
-	assert(found);
-	await assert.rejects(async () => await nvs.all());
-})
-
-// Reject blob index entry that uses the same key as entry with other data type
-test("blob index collide with string", async () => {
-	for await (const nvs of pages_reorder("blob-data-on-str")) {
-		await assert.rejects(async () => await nvs.all());
-	}
-});
-
 // Ensures blob data received in different orders is still handled correctly
 test("out of order blob", async () => {
 	for await (const nvs of pages_reorder("reorder")) {
@@ -323,6 +285,64 @@ test("nothing after complete", async () => {
 	const nvs = new NVS(loader);
 	await nvs.all();
 	await nvs.all();
+});
+
+
+
+// Not allowed to set partition when already defined
+test("no double set partition", async () => {
+	const nvs = new NVS(loader);
+	nvs.setPartition(0x9000, 0x6000);
+	assert.throws(() => nvs.setPartition(0x9000, 0x6000));
+});
+
+// Not allowed to fetch partition when already defined
+test("no double fetch partition", async () => {
+	const nvs = new NVS(loader);
+	const found = await nvs.fetchPartition();
+	assert(found);
+	await assert.rejects(async () => nvs.fetchPartition());
+});
+
+// Asserts empty partition table fails
+test("empty partition table", async () => {
+	const page_map = new Map();
+	page_map.set(0x8000, { read: false, data: new Uint8Array(0xc00).fill(0xff) });
+	const nvs = new NVS(loader_from_map(page_map));
+	assert(!await nvs.fetchPartition());
+	await assert.rejects(async () => await nvs.all());
+});
+
+
+
+// Reject multiple keys in the same namespace
+test("duplicate keys", async () => {
+	const nvs = new NVS(loader);
+	const found = await nvs.fetchPartition("duplicate-keys");
+	assert(found);
+	await assert.rejects(async () => await nvs.all());
+});
+
+// Reject blob data entry that uses the same key as entry with other data type
+test("blob data collide with string", async () => {
+	const nvs = new NVS(loader);
+	const found = await nvs.fetchPartition("blob-data-on-str");
+	assert(found);
+	await assert.rejects(async () => await nvs.all());
+})
+
+// Reject blob index entry that uses the same key as entry with other data type
+test("blob index collide with string", async () => {
+	for await (const nvs of pages_reorder("blob-data-on-str")) {
+		await assert.rejects(async () => await nvs.all());
+	}
+});
+
+
+
+// Currently BigInts are not supported in JSON
+test("JSON not support BigInt", () => {
+	assert.throws(() => JSON.stringify(1n));
 });
 
 // Asserts that output from .toJSON can be serialized
@@ -361,22 +381,12 @@ test("parsed JSON", async () => {
 	firmware_assert(nvs_config, cmp_json);
 });
 
-// Asserts that specifying a non default NVS partition parses correct partition
-test("non default nvs partition", async () => {
-	const nvs = new NVS(loader);
-	const found = await nvs.fetchPartition("nvs2");
-	assert(found);
-	await nvs.all();
-	firmware_assert_nvs(nvs_config2, nvs);
-});
 
-// Asserts empty partition table fails
-test("empty partition table", async () => {
-	const page_map = new Map();
-	page_map.set(0x8000, { read: false, data: new Uint8Array(0xc00).fill(0xff) });
-	const nvs = new NVS(loader_from_map(page_map));
-	assert(!await nvs.fetchPartition());
-	await assert.rejects(async () => await nvs.all());
+
+// Asserts that a type cast used in the NVS constructor is still required
+test("internal cast required", () => {
+	// @ts-expect-error
+	new ESPLoader({ port: new SerialPort() });
 });
 
 // Ensures constructor with serial port creates ESPLoader using serial port
