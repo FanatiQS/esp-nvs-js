@@ -110,10 +110,3 @@ The API documentation is available [here](https://fanatiqs.github.io/esp-nvs-js/
 
 * No support for encrypted NVS partitions
 * No delete or write support
-
-## Todo
-
-- [ ] Add tests
-- [ ] Add delete support
-- [ ] Add write support
-- [ ] Add support for encrypted partitions
