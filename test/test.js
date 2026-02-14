@@ -304,13 +304,22 @@ test("no double fetch partition", async () => {
 	await assert.rejects(async () => nvs.fetchPartition());
 });
 
-// Asserts empty partition table fails
+// Asserts empty partition table can fetch without reject and fails on .next
 test("empty partition table", async () => {
 	const page_map = new Map();
 	page_map.set(0x8000, { read: false, data: new Uint8Array(0xc00).fill(0xff) });
 	const nvs = new NVS(loader_from_map(page_map));
 	assert(!await nvs.fetchPartition());
-	await assert.rejects(async () => await nvs.all());
+	await assert.rejects(async () => await nvs.next());
+});
+
+// Asserts zeroed out partition table can fetch without reject and fails on .next
+test("zeroed partition table", async () => {
+	const page_map = new Map();
+	page_map.set(0x8000, { read: false, data: new Uint8Array(0xc00) });
+	const nvs = new NVS(loader_from_map(page_map));
+	assert(!await nvs.fetchPartition());
+	await assert.rejects(async () => await nvs.next());
 });
 
 
