@@ -280,6 +280,35 @@ test("full value between blob chunks in search", async () => {
 	}
 });
 
+// Asserts that clearing out some of the pages will result in an incomplete blob when iterating
+test("incomplete blob in iterator", async () => {
+	let done = false;
+	for (const [ addr, page ] of page_map) {
+		if (page.name === "reorder") {
+			// Blanks out NVS page and parses modified page map
+			const page_map_modified = new Map(page_map);
+			page_map_modified.set(addr, {
+				name: page.name,
+				read: false,
+				data: new Uint8Array(page.data.byteLength).fill(0xff)
+			});
+			const nvs = new NVS(loader_from_map(page_map_modified));
+			await nvs.fetchPartition("reorder");
+			await nvs.all();
+
+			// Test successful when iterating over nvs throws because of incomplete blob
+			try {
+				for (const a of nvs) {}
+			}
+			catch (err) {
+				done = true;
+				break;
+			}
+		}
+	}
+	assert(done);
+});
+
 // Parsing should do nothing if it has already parsed to the end
 test("nothing after complete", async () => {
 	const nvs = new NVS(loader);
@@ -345,6 +374,48 @@ test("blob index collide with string", async () => {
 	for await (const nvs of pages_reorder("blob-data-on-str")) {
 		await assert.rejects(async () => await nvs.all());
 	}
+});
+
+// Asserts invalid entry state is rejected
+test("invalid entry state", async () => {
+	const addr_bitmap_offset = 32;
+	const page_map_modified = new Map(page_map);
+	for (const [ addr, page ] of page_map_modified) {
+		if (page.name === "nvs") {
+			const data = new Uint8Array(page.data);
+			data[addr_bitmap_offset] = 0x01;
+			page_map_modified.set(addr, {
+				name: page.name,
+				read: false,
+				data: data
+			});
+			break;
+		}
+	}
+
+	const nvs = new NVS(loader_from_map(page_map_modified));
+	await assert.rejects(async () => await nvs.all());
+});
+
+// Asserts invalid entry type is rejected
+test("invalid entry type", async () => {
+	const addr_entry_offset = 64;
+	const page_map_modified = new Map(page_map);
+	for (const [ addr, page ] of page_map_modified) {
+		if (page.name === "nvs") {
+			const data = new Uint8Array(page.data);
+			data.fill(0xff, addr_entry_offset);
+			page_map_modified.set(addr, {
+				name: page.name,
+				read: false,
+				data: data
+			});
+			break;
+		}
+	}
+
+	const nvs = new NVS(loader_from_map(page_map_modified));
+	await assert.rejects(async () => await nvs.all());
 });
 
 
