@@ -7,7 +7,7 @@ import test from "node:test";
 import { ESPLoader } from "esptool-js";
 
 import { loader_from_map } from "./loader.js";
-import { NVS } from "../src/nvs.js";
+import { NVS, nvs_pages_lookup } from "../src/index.js";
 import { firmware_generate, firmware_assemble, firmware_assert, firmware_assert_nvs } from "./firmware.js";
 import "./stub_serialport.js";
 
@@ -58,6 +58,31 @@ async function* pages_reorder(partition_name) {
 			i++;
 		}
 	}
+}
+
+/**
+ * Clones first nvs page of specified partition so it can safely be modified since just creating a new map from another is a shallow copy
+ * @param {ESPLoader} loader
+ * @param {test_page_map} page_map_modified
+ * @param {string} [partition_name]
+ */
+async function clone_page_first(loader, page_map_modified, partition_name) {
+	assert(page_map_modified !== page_map);
+
+	const addr_list = /** @type {number[]} */([]);
+	await loader.connect();
+	assert(await nvs_pages_lookup(loader, addr_list, partition_name));
+	const [ addr ] = addr_list;
+	const page = page_map_modified.get(addr);
+	assert(page);
+
+	const data = new Uint8Array(page.data);
+	page_map_modified.set(addr, {
+		name: page.name,
+		read: false,
+		data: data
+	});
+	return data;
 }
 
 // NVS configuration data
@@ -380,20 +405,10 @@ test("blob index collide with string", async () => {
 test("invalid entry state", async () => {
 	const addr_bitmap_offset = 32;
 	const page_map_modified = new Map(page_map);
-	for (const [ addr, page ] of page_map_modified) {
-		if (page.name === "nvs") {
-			const data = new Uint8Array(page.data);
-			data[addr_bitmap_offset] = 0x01;
-			page_map_modified.set(addr, {
-				name: page.name,
-				read: false,
-				data: data
-			});
-			break;
-		}
-	}
-
-	const nvs = new NVS(loader_from_map(page_map_modified));
+	const loader = loader_from_map(page_map_modified);
+	const data = await clone_page_first(loader, page_map_modified);
+	data[addr_bitmap_offset] = 0x01;
+	const nvs = new NVS(loader);
 	await assert.rejects(async () => await nvs.all());
 });
 
@@ -401,20 +416,10 @@ test("invalid entry state", async () => {
 test("invalid entry type", async () => {
 	const addr_entry_offset = 64;
 	const page_map_modified = new Map(page_map);
-	for (const [ addr, page ] of page_map_modified) {
-		if (page.name === "nvs") {
-			const data = new Uint8Array(page.data);
-			data.fill(0xff, addr_entry_offset);
-			page_map_modified.set(addr, {
-				name: page.name,
-				read: false,
-				data: data
-			});
-			break;
-		}
-	}
-
-	const nvs = new NVS(loader_from_map(page_map_modified));
+	const loader = loader_from_map(page_map_modified);
+	const data = await clone_page_first(loader, page_map_modified);
+	data.fill(0xff, addr_entry_offset);
+	const nvs = new NVS(loader);
 	await assert.rejects(async () => await nvs.all());
 });
 
