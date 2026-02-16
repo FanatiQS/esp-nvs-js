@@ -52,47 +52,51 @@ export async function firmware_generate(partitions, work_dir=default_dir) {
 	partition_table_csv.write("#name,type,subtype,offset,size,flags\n");
 
 	// Writes configuration to partition table CSV file and its optional data to separate CSV file
-	for (const { name, type, subtype, size, data } of partitions) {
-		partition_table_csv.write(`${name},${type},${subtype},,0x${size.toString(16)},\n`);
+	for (const { name, type: partition_type, subtype, size, data } of partitions) {
+		partition_table_csv.write(`${name},${partition_type},${subtype},,0x${size.toString(16)},\n`);
 
-		// Generates NVS CSV if data is available
-		if (data) {
-			// Creates NVS CSV file
-			const nvs_csv_path = `${work_dir}/${name}.csv`;
-			const nvs_csv = createWriteStream(nvs_csv_path);
-			nvs_csv.write("key,type,encoding,value\n");
+		// Only generates NVS CSV if data is available
+		if (!data) continue;
 
-			// Writes NVS configuration to CSV file
-			for (const [ namespace, nvs_entries ] of Object.entries(data)) {
-				nvs_csv.write(`${namespace},namespace,,\n`);
-				for (let { key, type, value } of nvs_entries) {
-					// Type for blob is optional
-					if (ArrayBuffer.isView(value)) {
-						value = Buffer.from(value).toString("hex");
-						type = "hex2bin";
-					}
-					// Type for string is optional
-					else if (typeof value === "string") {
-						type = "string";
-					}
+		// Creates NVS CSV file
+		const nvs_csv_path = `${work_dir}/${name}.csv`;
+		const nvs_csv = createWriteStream(nvs_csv_path);
+		nvs_csv.write("key,type,encoding,value\n");
 
-					// Writes NVS entry
-					nvs_csv.write(`${key},data,${type},${value}\n`);
+		// Writes NVS configuration to CSV file
+		for (const [ namespace, nvs_entries ] of Object.entries(data)) {
+			nvs_csv.write(`${namespace},namespace,,\n`);
+			for (let { key, type, value } of nvs_entries) {
+				// Type for blob is optional
+				if (ArrayBuffer.isView(value)) {
+					value = Buffer.from(value).toString("hex");
+					type = "hex2bin";
 				}
+				// Type for string is optional
+				else if (typeof value === "string") {
+					type = "string";
+				}
+
+				// Writes NVS entry
+				nvs_csv.write(`${key},data,${type},${value}\n`);
 			}
-
-			// Ensures CSV file is completely written to before using it
-			await new Promise((resolve) => nvs_csv.end(resolve));
-
-			// Generates NVS binary from CSV file
-			const nvs_bin_path = `${work_dir}/${name}.bin`;
-			const nvs_script_path = `python -m esp_idf_nvs_partition_gen`;
-			await python(`${nvs_script_path} generate ${nvs_csv_path} ${nvs_bin_path} ${size}`);	
 		}
+
+		// Ensures CSV file is completely written to before using it
+		await new Promise((resolve) => {
+			nvs_csv.end(resolve);
+		});
+
+		// Generates NVS binary from CSV file
+		const nvs_bin_path = `${work_dir}/${name}.bin`;
+		const nvs_script_path = `python -m esp_idf_nvs_partition_gen`;
+		await python(`${nvs_script_path} generate ${nvs_csv_path} ${nvs_bin_path} ${size}`);	
 	}
 
 	// Ensures partition table CSV file is completely written before using it
-	await new Promise((resolve) => partition_table_csv.end(resolve));
+	await new Promise((resolve) => {
+		partition_table_csv.end(resolve);
+	});
 
 	// Generates partition table binary from CSV file
 	const partition_table_bin_path = `${work_dir}/partition_table.bin`;
@@ -162,7 +166,7 @@ export function firmware_assert_nvs(nvs_config, nvs) {
 	/** @type {test_nvs_compare} */
 	const nvs_parsed_cmp = {};
 	for (const [ namespace, key, value] of nvs) {
-		const entries = nvs_parsed_cmp[namespace] || (nvs_parsed_cmp[namespace] = {});
+		const entries = nvs_parsed_cmp[namespace] ||= {};
 		entries[key] = value;
 	}
 	firmware_assert(nvs_config, nvs_parsed_cmp);

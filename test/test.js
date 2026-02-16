@@ -14,6 +14,105 @@ import "./stub_serialport.js";
 // Prevents ESPLoader from printing to the console
 ESPLoader.prototype.write = () => {};
 
+// NVS configuration data
+const nvs_config = {
+	"uint-max": [
+		{ key: "u8-max", type: "u8", value: 2 ** 8 - 1 },
+		{ key: "u16-max", type: "u16", value: 2 ** 16 - 1 },
+		{ key: "u32-max", type: "u32", value: 2 ** 32 - 1 },
+		{ key: "u64-max", type: "u64", value: 2n ** 63n - 1n } // python doesn't support full range of unsigned 64-bit values
+	],
+	"uint-min": [
+		{ key: "u8-min", type: "u8", value: 0 },
+		{ key: "u16-min", type: "u16", value: 0 },
+		{ key: "u32-min", type: "u32", value: 0 },
+		{ key: "u64-min", type: "u64", value: 0 }
+	],
+	"int-max": [
+		{ key: "i8-max", type: "i8", value: 2 ** 7 - 1 },
+		{ key: "i16-max", type: "i16", value: 2 ** 15 - 1 },
+		{ key: "i32-max", type: "i32", value: 2 ** 31 - 1 },
+		{ key: "i64-max", type: "i64", value: 2n ** 63n - 1n }
+	],
+	"int-min": [
+		{ key: "i8-min", type: "i8", value: -(2 ** 7) },
+		{ key: "i16-min", type: "i16", value: -(2 ** 15) },
+		{ key: "i32-min", type: "i32", value: -(2 ** 31) },
+		{ key: "i64-min", type: "i64", value: -(2n ** 63n) }
+	],
+	"js-safe": [
+		{ key: "safe-u64-max", type: "u64", value: Number.MAX_SAFE_INTEGER },
+		{ key: "safe-i64-max", type: "i64", value: Number.MAX_SAFE_INTEGER },
+		{ key: "safe-i64-min", type: "i64", value: -Number.MAX_SAFE_INTEGER }
+	],
+	"js-unsafe": [
+		{ key: "unsafe-u64-max", type: "u64", value: BigInt(Number.MAX_SAFE_INTEGER) + 1n },
+		{ key: "unsafe-i64-max", type: "i64", value: BigInt(Number.MAX_SAFE_INTEGER) + 1n },
+		{ key: "unsafe-i64-min", type: "i64", value: -BigInt(Number.MAX_SAFE_INTEGER) - 1n }
+	],
+	"string": [
+		{ key: "short", value: "banana" },
+		{ key: "long", value: "0123456789abcdef".repeat(124 * 2 - 1) },
+		{ key: "utf8", value: "åäö√ø†ç≈ƒ†=π¬…æ" },
+		{ key: "emojis", value: "💂‍♂️" }
+	],
+	"blob": [
+		{ key: "single-page", value: new Uint8Array(5).map((value, index) => index) },
+		{ key: "multi-page", value: new Uint8Array(0x2000).map((value, index) => index) }
+	],
+	"extra": [
+		{ key: "u64-unsafe", type: "u64", value: 2n ** 63n - 512n },
+		{ key: "duplicate", type: "u8", value: 1 }
+	],
+	"empty": []
+};
+
+// Alternative NVS configuration data
+const nvs_config2 = {
+	"extra": [
+		{ key: "duplicate", type: "u8", value: 2 }
+	]
+};
+
+// Usable space left in NVS page when accounting for page header, entry state bitmap and entry header
+const nvs_page_usable_space = 0x1000 - 64 - 32;
+
+// Blobs aligned so index and chunks always lands on a separate pages
+const nvs_config_reorder = {
+	"foo": [
+		{ key: "small", value: new Uint8Array(nvs_page_usable_space - 32).map((value, index) => index) }, // single chunk
+		{ key: "big", value: new Uint8Array(nvs_page_usable_space * 2 - 32).map((value, index) => index) } // multiple chunks
+	]
+};
+
+// Generates firmware buffer
+await firmware_generate([
+	{ name: "phy_init", type: "data", subtype: "phy", size: 0x1000 },
+	{ name: "nvs", type: "data", subtype: "nvs", size: 0x6000, data: nvs_config },
+	{ name: "factory", type: "app", subtype: "factory", size: 0x10000 },
+	{ name: "nvs2", type: "data", subtype: "nvs", size: 0x4000, data: nvs_config2 },
+	{ name: "duplicate-keys", type: "data", subtype: "nvs", size: 0x3000, data: {
+		"foo": [
+			{ key: "bar", type: "u8", value: 1 },
+			{ key: "bar", type: "i16", value: 2 }
+		]
+	}},
+	{ name: "blob-data-on-str", type: "data", subtype: "nvs", size: 0x5000, data: {
+		"foo": [
+			{ key: "baz", value: "0".repeat(nvs_page_usable_space - 1 - 32) }, // string filling to end of page
+			{ key: "bar", value: 1, type: "u8" }, // dummy data since string can for some reason not fill page by itself
+			{ key: "baz", value: new Uint8Array(nvs_page_usable_space).map((value, index) => index) } // blob with data and index in separate pages
+		]
+	}},
+	{ name: "reorder", type: "data", subtype: "nvs", size: 0x5000, data: nvs_config_reorder }
+]);
+
+// Creates loader using generated firmware buffer
+const page_map = await firmware_assemble();
+const loader = loader_from_map(page_map);
+
+
+
 /**
  * Goes through every page order permutation in partition
  * @param {string} partition_name
@@ -84,103 +183,6 @@ async function clone_page_first(loader, page_map_modified, partition_name) {
 	});
 	return data;
 }
-
-// NVS configuration data
-const nvs_config = {
-	"uint-max": [
-		{ key: "u8-max", type: "u8", value: 2 ** 8 - 1 },
-		{ key: "u16-max", type: "u16", value: 2 ** 16 - 1 },
-		{ key: "u32-max", type: "u32", value: 2 ** 32 - 1 },
-		{ key: "u64-max", type: "u64", value: 2n ** 63n - 1n } // python doesn't support full range of unsigned 64-bit values
-	],
-	"uint-min": [
-		{ key: "u8-min", type: "u8", value: 0 },
-		{ key: "u16-min", type: "u16", value: 0 },
-		{ key: "u32-min", type: "u32", value: 0 },
-		{ key: "u64-min", type: "u64", value: 0 }
-	],
-	"int-max": [
-		{ key: "i8-max", type: "i8", value: 2 ** 7 - 1 },
-		{ key: "i16-max", type: "i16", value: 2 ** 15 - 1 },
-		{ key: "i32-max", type: "i32", value: 2 ** 31 - 1 },
-		{ key: "i64-max", type: "i64", value: 2n ** 63n - 1n }
-	],
-	"int-min": [
-		{ key: "i8-min", type: "i8", value: -(2 ** 7) },
-		{ key: "i16-min", type: "i16", value: -(2 ** 15) },
-		{ key: "i32-min", type: "i32", value: -(2 ** 31) },
-		{ key: "i64-min", type: "i64", value: -(2n ** 63n) }
-	],
-	"js-safe": [
-		{ key: "safe-u64-max", type: "u64", value: Number.MAX_SAFE_INTEGER },
-		{ key: "safe-i64-max", type: "i64", value: Number.MAX_SAFE_INTEGER },
-		{ key: "safe-i64-min", type: "i64", value: -Number.MAX_SAFE_INTEGER }
-	],
-	"js-unsafe": [
-		{ key: "unsafe-u64-max", type: "u64", value: BigInt(Number.MAX_SAFE_INTEGER) + 1n },
-		{ key: "unsafe-i64-max", type: "i64", value: BigInt(Number.MAX_SAFE_INTEGER) + 1n },
-		{ key: "unsafe-i64-min", type: "i64", value: -BigInt(Number.MAX_SAFE_INTEGER) - 1n }
-	],
-	"string": [
-		{ key: "short", value: "banana" },
-		{ key: "long", value: "0123456789abcdef".repeat(124 * 2 - 1) + "0123456789abcde" },
-		{ key: "utf8", value: "åäö√ø†ç≈ƒ†=π¬…æ" },
-		{ key: "emojis", value: "💂‍♂️" }
-	],
-	"blob": [
-		{ key: "single-page", value: new Uint8Array(5).map((value, index) => index) },
-		{ key: "multi-page", value: new Uint8Array(0x2000).map((value, index) => index) }
-	],
-	"extra": [
-		{ key: "u64-unsafe", type: "u64", value: 2n ** 63n - 512n },
-		{ key: "duplicate", type: "u8", value: 1 }
-	],
-	"empty": []
-};
-
-// Alternative NVS configuration data
-const nvs_config2 = {
-	"extra": [
-		{ key: "duplicate", type: "u8", value: 2 }
-	]
-};
-
-// Usable space left in NVS page when accounting for page header, entry state bitmap and entry header
-const nvs_page_usable_space = 0x1000 - 64 - 32;
-
-// Blobs aligned so index and chunks always lands on a separate pages
-const nvs_config_reorder = {
-	"foo": [
-		{ key: "small", value: new Uint8Array(nvs_page_usable_space - 32).map((value, index) => index) }, // single chunk
-		{ key: "big", value: new Uint8Array(nvs_page_usable_space * 2 - 32).map((value, index) => index) } // multiple chunks
-	]
-}
-
-// Generates firmware buffer
-await firmware_generate([
-	{ name: "phy_init", type: "data", subtype: "phy", size: 0x1000 },
-	{ name: "nvs", type: "data", subtype: "nvs", size: 0x6000, data: nvs_config },
-	{ name: "factory", type: "app", subtype: "factory", size: 0x10000 },
-	{ name: "nvs2", type: "data", subtype: "nvs", size: 0x4000, data: nvs_config2 },
-	{ name: "duplicate-keys", type: "data", subtype: "nvs", size: 0x3000, data: {
-		"foo": [
-			{ key: "bar", type: "u8", value: 1 },
-			{ key: "bar", type: "i16", value: 2 }
-		]
-	}},
-	{ name: "blob-data-on-str", type: "data", subtype: "nvs", size: 0x5000, data: {
-		"foo": [
-			{ key: "baz", value: "0".repeat(nvs_page_usable_space - 1 - 32) }, // string filling to end of page
-			{ key: "bar", value: 1, type: "u8" }, // dummy data since string can for some reason not fill page by itself
-			{ key: "baz", value: new Uint8Array(nvs_page_usable_space).map((value, index) => index) } // blob with data and index in separate pages
-		]
-	}},
-	{ name: "reorder", type: "data", subtype: "nvs", size: 0x5000, data: nvs_config_reorder }
-]);
-
-// Creates loader using generated firmware buffer
-const page_map = await firmware_assemble();
-const loader = loader_from_map(page_map);
 
 
 
@@ -392,7 +394,7 @@ test("blob data collide with string", async () => {
 	const found = await nvs.fetchPartition("blob-data-on-str");
 	assert(found);
 	await assert.rejects(async () => await nvs.all());
-})
+});
 
 // Reject blob index entry that uses the same key as entry with other data type
 test("blob index collide with string", async () => {
@@ -448,19 +450,19 @@ test("parsed JSON", async () => {
 		const entries = Object.entries(object);
 		if (!entries.length) continue;
 		cmp_json[namespace] = Object.fromEntries(entries.map(([ key, value]) => {
-			// No conversion needed
-			if (typeof value !== "object") {
-				return [ key, value ];
-			}
 			// Converts JSON numbers array back to Uint8Array
-			else if (Array.isArray(value)) {
+			if (Array.isArray(value)) {
 				return [ key, new Uint8Array(value) ];
 			}
+
 			// Converts JSON bigint back to bigint primitive
-			else {
+			if (typeof value === "object") {
 				assert(value.value > Number.MAX_SAFE_INTEGER || value.value < Number.MIN_SAFE_INTEGER);
 				return [ key, BigInt(value.value) + BigInt(value.diff) ];
 			}
+
+			// No conversion needed
+			return [ key, value ];
 		}));
 	}
 	firmware_assert(nvs_config, cmp_json);
@@ -482,7 +484,7 @@ test("serial port NVS constructor argument", () => {
 		called = true;
 		return {};
 	};
-	const nvs = new NVS(port);
+	new NVS(port);
 	assert(called);
 });
 
