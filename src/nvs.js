@@ -6,7 +6,7 @@ import { nvs_transform_json, nvs_transform_html } from "./nvs_transform.js";
 
 export class NVS {
 	/**
-	 * @param {ESPLoader|SerialPort} loader Connected ESPTool loader with stub running
+	 * @param {ESPLoader|SerialPort} loader ESPLoader from ESPTool library or WebSerial SerialPort
 	 */
 	constructor(loader) {
 		if (loader instanceof SerialPort) {
