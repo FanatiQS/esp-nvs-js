@@ -22,7 +22,7 @@ for (const key of Object.getOwnPropertyNames(ESPLoader.prototype)) {
  * @param {number} size
  * @this {ESPLoaderStub}
  */
-ESPLoader.prototype.readFlash = async function (addr, size) {
+ESPLoader.prototype.readFlash = async function readFlash(addr, size) {
 	// Ensures loader was connected before reading flash
 	if (!this.buf) {
 		throw new Error("Loader not connected");
@@ -35,18 +35,18 @@ ESPLoader.prototype.readFlash = async function (addr, size) {
 /**
  * @this {ESPLoaderStub}
  */
-ESPLoader.prototype.connect = async function () {
+ESPLoader.prototype.connect = async function connect() {
 	if (this.buf) {
 		throw new Error("Loader already open");
 	}
-	const response = await fetch(ESPLoaderStubFilePath);
+	const response = await fetch(globalThis.ESPLoaderStubFilePath);
 	this.buf = await response.arrayBuffer();
 };
 
-ESPLoader.prototype.runStub = async function () {
+ESPLoader.prototype.runStub = async function runStub() {
 	this.chip = /** @type {ROM} */({});
 	return this.chip;
 };
 
-ESPLoader.prototype.info = function () {
+ESPLoader.prototype.info = function info() {
 };
