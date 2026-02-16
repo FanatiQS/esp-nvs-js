@@ -11,11 +11,13 @@
 	"devDependencies": {
 		"@types/node": "^25.1.0",
 		"csv-parse": "^6.1.0",
+		"eslint": "^9.39.2",
 		"typescript": "^5.9.3"
 	},
 	"scripts": {
 		"lint:ts": "npx tsc -p lint/tsconfig_src.json && npx tsc -p lint/tsconfig_test.json",
-		"lint": "npm run lint:ts",
+		"lint:eslint": "npx eslint --config lint/eslint.js",
+		"lint": "npm run lint:ts && npm run lint:eslint",
 		"test": "npm run lint && node --import ./test/import_hook.js --experimental-test-coverage --test ./test/test.js"
 	}
 }
