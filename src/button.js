@@ -66,21 +66,21 @@ class AsyncButton extends HTMLButtonElement {
 	 */
 	addEventListener(type, listener, options) {
 		// Registers previously registered callback for an event
-		const wrapper = this.listeners.get(listener);
+		let wrapper = this.listeners.get(listener);
 		if (wrapper) {
 			super.addEventListener(type, wrapper, options);
 		}
 		// Registers callback with wrapper
 		else if (typeof listener === "function") {
 			/** @param {Event} event */
-			const wrapper = (event) => this.dispatch(listener, event);
+			wrapper = (event) => this.dispatch(listener, event);
 			super.addEventListener(type, wrapper, options);
 			this.listeners.set(listener, wrapper);
 		}
 		// Registers event handler object with wrapper
 		else if (listener && typeof listener.handleEvent === "function") {
 			/** @param {Event} event */
-			const wrapper = (event) => this.dispatch(listener.handleEvent, event, listener);
+			wrapper = (event) => this.dispatch(listener.handleEvent, event, listener);
 			super.addEventListener(type, wrapper, options);
 			this.listeners.set(listener, wrapper);
 		}
