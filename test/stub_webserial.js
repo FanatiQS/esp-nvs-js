@@ -13,4 +13,4 @@ class SerialStub {
 }
 
 // Defines serial using defineProperty since, it is read-only if it exists
-Object.defineProperty(navigator, "serial", { value: new SerialStub() });
+Object.defineProperty(globalThis.navigator, "serial", { value: new SerialStub() });
