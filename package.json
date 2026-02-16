@@ -14,6 +14,8 @@
 		"typescript": "^5.9.3"
 	},
 	"scripts": {
-		"test": "npx tsc && node --import ./test/import_hook.js --experimental-test-coverage --test ./test/test.js"
+		"lint:ts": "npx tsc -p lint/tsconfig_src.json && npx tsc -p lint/tsconfig_test.json",
+		"lint": "npm run lint:ts",
+		"test": "npm run lint && node --import ./test/import_hook.js --experimental-test-coverage --test ./test/test.js"
 	}
 }

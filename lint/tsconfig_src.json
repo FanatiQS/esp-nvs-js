@@ -1,0 +1,13 @@
+{
+	"compilerOptions": {
+		"noEmit": true,
+		"checkJs": true,
+		"strict": true,
+		"target": "es2020",
+		"moduleResolution": "bundler"
+	},
+	"include": [
+		"../src/*.js",
+		"../src/esptool.d.ts"
+	]
+}
