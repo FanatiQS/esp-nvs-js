@@ -64,7 +64,8 @@ export default defineConfig([
 			"no-new": "off",
 			"no-empty-function": "off",
 			"class-methods-use-this": "off",
-			"capitalized-comments": "off"
+			"capitalized-comments": "off",
+			"require-await": "off"
 		}
 	}
 ]);

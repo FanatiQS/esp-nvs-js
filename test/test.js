@@ -324,10 +324,11 @@ test("incomplete blob in iterator", async () => {
 			await nvs.all();
 
 			// Test successful when iterating over nvs throws because of incomplete blob
+			const iterator = nvs[Symbol.iterator]();
 			try {
-				for (const a of nvs) {}
+				while (!iterator.next().done);
 			}
-			catch (err) {
+			catch {
 				done = true;
 				break;
 			}
@@ -357,7 +358,7 @@ test("no double fetch partition", async () => {
 	const nvs = new NVS(loader_default);
 	const found = await nvs.fetchPartition();
 	assert(found);
-	await assert.rejects(async () => nvs.fetchPartition());
+	await assert.rejects(() => nvs.fetchPartition());
 });
 
 // Asserts empty partition table can fetch without reject and fails on .next
