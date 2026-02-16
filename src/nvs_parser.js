@@ -164,10 +164,10 @@ function nvs_entry_parse(page, cache) {
 	const type = page.view.getUint8(offset + 1);
 	const key_buf = nvs_buffer_null_terminate(page.view.buffer, page.view.byteOffset + offset + 8, 16);
 	const key = String.fromCharCode(...key_buf);
-	if (ns == 0 && type !== nvs_entry_type.uint8) {
+	if (ns === 0 && type !== nvs_entry_type.uint8) {
 		throw new Error("Invalid NVS data type for namespace");
 	}
-	const entries = cache[ns] || (cache[ns] = new Map());
+	const entries = cache[ns] ||= new Map();
 
 	// Gets entry's data based on defined type
 	/** @type {nvs_value|null} */
@@ -321,7 +321,7 @@ function nvs_entry_parse(page, cache) {
 	entries.set(key, entry);
 
 	// Returns entry unless an incomplete blob
-	return (!chunks) ? entry : null;
+	return (chunks) ? null : entry;
 }
 
 /**
