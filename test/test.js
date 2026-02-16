@@ -160,12 +160,12 @@ async function* pages_reorder(partition_name) {
 }
 
 /**
- * Clones first nvs page of specified partition so it can safely be modified since just creating a new map from another is a shallow copy
+ * Clones first nvs page for specified partition so it can safely be modified since just creating a new map from another is a shallow copy
  * @param {ESPLoader} loader
  * @param {test_page_map} page_map_modified
  * @param {string} [partition_name]
  */
-async function clone_page_first(loader, page_map_modified, partition_name) {
+async function page_editable(loader, page_map_modified, partition_name) {
 	assert(page_map_modified !== page_map_default);
 
 	const addr_list = /** @type {number[]} */([]);
@@ -408,7 +408,7 @@ test("invalid entry state", async () => {
 	const addr_bitmap_offset = 32;
 	const page_map_modified = new Map(page_map_default);
 	const loader = loader_from_map(page_map_modified);
-	const data = await clone_page_first(loader, page_map_modified);
+	const data = await page_editable(loader, page_map_modified);
 	data[addr_bitmap_offset] = 0x01;
 	const nvs = new NVS(loader);
 	await assert.rejects(async () => await nvs.all());
@@ -419,7 +419,7 @@ test("invalid entry type", async () => {
 	const addr_entry_offset = 64;
 	const page_map_modified = new Map(page_map_default);
 	const loader = loader_from_map(page_map_modified);
-	const data = await clone_page_first(loader, page_map_modified);
+	const data = await page_editable(loader, page_map_modified);
 	data.fill(0xff, addr_entry_offset);
 	const nvs = new NVS(loader);
 	await assert.rejects(async () => await nvs.all());
