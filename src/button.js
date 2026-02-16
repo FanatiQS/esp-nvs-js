@@ -22,7 +22,8 @@ class AsyncButton extends HTMLButtonElement {
 				Object.defineProperty(this, key, {
 					get: () => {
 						// @ts-ignore
-						return super[key]?.callback;
+						const wrapper = super[key];
+						return wrapper?.callback;
 					},
 					set: (callback) => {
 						/** @param {Event} event */
