@@ -1,5 +1,7 @@
 // @ts-check
 
+import assert from "node:assert";
+
 // NVS configuration data
 export const nvs_config_default = {
 	"uint-max": [
@@ -70,3 +72,33 @@ export const nvs_config_reorder = {
 		{ key: "big", value: new Uint8Array(nvs_config_page_space_usable * 2 - 32).map((value, index) => index) } // multiple chunks
 	]
 };
+
+/**
+ * Asserts that configuration object used for generating firmware buffer is identical to compare data
+ * @param {test_nvs_config} nvs_config
+ * @param {test_nvs_compare} nvs_cmp
+ */
+export function nvs_config_assert(nvs_config, nvs_cmp) {
+	/** @type {test_nvs_compare} */
+	const nvs_config_cmp = {};
+	for (const [ namespace, entries ] of Object.entries(nvs_config)) {
+		if (!entries.length) continue;
+		nvs_config_cmp[namespace] = Object.fromEntries(entries.map(({ key, value }) => [ key, value ]));
+	}
+	assert.deepStrictEqual(nvs_config_cmp, nvs_cmp);
+}
+
+/**
+ * Asserts that configuration object used for generating firmware buffer is identical to NVS parser output
+ * @param {test_nvs_config} nvs_config
+ * @param {import("../src/nvs.js").NVS} nvs
+ */
+export function nvs_config_assert_nvs(nvs_config, nvs) {
+	/** @type {test_nvs_compare} */
+	const nvs_parsed_cmp = {};
+	for (const [ namespace, key, value] of nvs) {
+		const entries = nvs_parsed_cmp[namespace] ||= {};
+		entries[key] = value;
+	}
+	nvs_config_assert(nvs_config, nvs_parsed_cmp);
+}

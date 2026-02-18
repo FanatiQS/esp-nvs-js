@@ -8,8 +8,15 @@ import { ESPLoader } from "esptool-js";
 
 import { loader_from_map } from "./loader.js";
 import { NVS, nvs_pages_lookup } from "../src/index.js";
-import { firmware_generate, firmware_assemble, firmware_assert, firmware_assert_nvs } from "./firmware.js";
-import { nvs_config_default, nvs_config2, nvs_config_reorder, nvs_config_page_space_usable } from "./nvs_config.js";
+import { firmware_generate, firmware_assemble } from "./firmware.js";
+import {
+	nvs_config_default,
+	nvs_config2,
+	nvs_config_reorder,
+	nvs_config_page_space_usable,
+	nvs_config_assert,
+	nvs_config_assert_nvs
+} from "./nvs_config.js";
 import "./stub_serialport.js";
 
 // Prevents ESPLoader from printing to the console
@@ -175,7 +182,7 @@ test("non default nvs partition", async () => {
 	const found = await nvs.fetchPartition("nvs2");
 	assert(found);
 	await nvs.all();
-	firmware_assert_nvs(nvs_config2, nvs);
+	nvs_config_assert_nvs(nvs_config2, nvs);
 });
 
 // Searches for NVS partition by name without success
@@ -191,7 +198,7 @@ test("missing nvs partition", async () => {
 test("parser", async () => {
 	const nvs = new NVS(loader_default);
 	await nvs.all();
-	firmware_assert_nvs(nvs_config_default, nvs);
+	nvs_config_assert_nvs(nvs_config_default, nvs);
 });
 
 // Searching for specified value
@@ -226,7 +233,7 @@ test("empty namespace", async () => {
 test("out of order blob", async () => {
 	for await (const nvs of pages_reorder("reorder")) {
 		await nvs.all();
-		firmware_assert_nvs(nvs_config_reorder, nvs);
+		nvs_config_assert_nvs(nvs_config_reorder, nvs);
 	}
 });
 
@@ -396,7 +403,7 @@ test("parsed JSON", async () => {
 			return [ key, value ];
 		}));
 	}
-	firmware_assert(nvs_config_default, cmp_json);
+	nvs_config_assert(nvs_config_default, cmp_json);
 });
 
 

@@ -141,33 +141,3 @@ export async function firmware_assemble(work_dir=default_dir) {
 
 	return page_map;
 }
-
-/**
- * Asserts that configuration object used for generating firmware buffer is identical to compare data
- * @param {test_nvs_config} nvs_config
- * @param {test_nvs_compare} nvs_cmp
- */
-export function firmware_assert(nvs_config, nvs_cmp) {
-	/** @type {test_nvs_compare} */
-	const nvs_config_cmp = {};
-	for (const [ namespace, entries ] of Object.entries(nvs_config)) {
-		if (!entries.length) continue;
-		nvs_config_cmp[namespace] = Object.fromEntries(entries.map(({ key, value }) => [ key, value ]));
-	}
-	assert.deepStrictEqual(nvs_config_cmp, nvs_cmp);
-}
-
-/**
- * Asserts that configuration object used for generating firmware buffer is identical to NVS parser output
- * @param {test_nvs_config} nvs_config
- * @param {import("../src/nvs.js").NVS} nvs
- */
-export function firmware_assert_nvs(nvs_config, nvs) {
-	/** @type {test_nvs_compare} */
-	const nvs_parsed_cmp = {};
-	for (const [ namespace, key, value] of nvs) {
-		const entries = nvs_parsed_cmp[namespace] ||= {};
-		entries[key] = value;
-	}
-	firmware_assert(nvs_config, nvs_parsed_cmp);
-}
