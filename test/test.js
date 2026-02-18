@@ -9,81 +9,11 @@ import { ESPLoader } from "esptool-js";
 import { loader_from_map } from "./loader.js";
 import { NVS, nvs_pages_lookup } from "../src/index.js";
 import { firmware_generate, firmware_assemble, firmware_assert, firmware_assert_nvs } from "./firmware.js";
+import { nvs_config_default, nvs_config2, nvs_config_reorder, nvs_config_page_space_usable } from "./nvs_config.js";
 import "./stub_serialport.js";
 
 // Prevents ESPLoader from printing to the console
 ESPLoader.prototype.write = () => {};
-
-// NVS configuration data
-const nvs_config_default = {
-	"uint-max": [
-		{ key: "u8-max", type: "u8", value: 2 ** 8 - 1 },
-		{ key: "u16-max", type: "u16", value: 2 ** 16 - 1 },
-		{ key: "u32-max", type: "u32", value: 2 ** 32 - 1 },
-		{ key: "u64-max", type: "u64", value: 2n ** 63n - 1n } // python doesn't support full range of unsigned 64-bit values
-	],
-	"uint-min": [
-		{ key: "u8-min", type: "u8", value: 0 },
-		{ key: "u16-min", type: "u16", value: 0 },
-		{ key: "u32-min", type: "u32", value: 0 },
-		{ key: "u64-min", type: "u64", value: 0 }
-	],
-	"int-max": [
-		{ key: "i8-max", type: "i8", value: 2 ** 7 - 1 },
-		{ key: "i16-max", type: "i16", value: 2 ** 15 - 1 },
-		{ key: "i32-max", type: "i32", value: 2 ** 31 - 1 },
-		{ key: "i64-max", type: "i64", value: 2n ** 63n - 1n }
-	],
-	"int-min": [
-		{ key: "i8-min", type: "i8", value: -(2 ** 7) },
-		{ key: "i16-min", type: "i16", value: -(2 ** 15) },
-		{ key: "i32-min", type: "i32", value: -(2 ** 31) },
-		{ key: "i64-min", type: "i64", value: -(2n ** 63n) }
-	],
-	"js-safe": [
-		{ key: "safe-u64-max", type: "u64", value: Number.MAX_SAFE_INTEGER },
-		{ key: "safe-i64-max", type: "i64", value: Number.MAX_SAFE_INTEGER },
-		{ key: "safe-i64-min", type: "i64", value: -Number.MAX_SAFE_INTEGER }
-	],
-	"js-unsafe": [
-		{ key: "unsafe-u64-max", type: "u64", value: BigInt(Number.MAX_SAFE_INTEGER) + 1n },
-		{ key: "unsafe-i64-max", type: "i64", value: BigInt(Number.MAX_SAFE_INTEGER) + 1n },
-		{ key: "unsafe-i64-min", type: "i64", value: -BigInt(Number.MAX_SAFE_INTEGER) - 1n }
-	],
-	"string": [
-		{ key: "short", value: "banana" },
-		{ key: "long", value: "0123456789abcdef".repeat(124 * 2 - 1) },
-		{ key: "utf8", value: "åäö√ø†ç≈ƒ†=π¬…æ" },
-		{ key: "emojis", value: "💂‍♂️" }
-	],
-	"blob": [
-		{ key: "single-page", value: new Uint8Array(5).map((value, index) => index) },
-		{ key: "multi-page", value: new Uint8Array(0x2000).map((value, index) => index) }
-	],
-	"extra": [
-		{ key: "u64-unsafe", type: "u64", value: 2n ** 63n - 512n },
-		{ key: "duplicate", type: "u8", value: 1 }
-	],
-	"empty": []
-};
-
-// Alternative NVS configuration data
-const nvs_config2 = {
-	"extra": [
-		{ key: "duplicate", type: "u8", value: 2 }
-	]
-};
-
-// Usable space left in NVS page when accounting for page header, entry state bitmap and entry header
-const nvs_page_usable_space = 0x1000 - 64 - 32;
-
-// Blobs aligned so index and chunks always lands on a separate pages
-const nvs_config_reorder = {
-	"foo": [
-		{ key: "small", value: new Uint8Array(nvs_page_usable_space - 32).map((value, index) => index) }, // single chunk
-		{ key: "big", value: new Uint8Array(nvs_page_usable_space * 2 - 32).map((value, index) => index) } // multiple chunks
-	]
-};
 
 // Generates firmware buffer
 await firmware_generate([
@@ -99,9 +29,9 @@ await firmware_generate([
 	}},
 	{ name: "blob-data-on-str", type: "data", subtype: "nvs", size: 0x5000, data: {
 		"foo": [
-			{ key: "baz", value: "0".repeat(nvs_page_usable_space - 1 - 32) }, // string filling to end of page
+			{ key: "baz", value: "0".repeat(nvs_config_page_space_usable - 1 - 32) }, // string filling to end of page
 			{ key: "bar", value: 1, type: "u8" }, // dummy data since string can for some reason not fill page by itself
-			{ key: "baz", value: new Uint8Array(nvs_page_usable_space).map((value, index) => index) } // blob with data and index in separate pages
+			{ key: "baz", value: new Uint8Array(nvs_config_page_space_usable).map((value, index) => index) } // blob with data and index in separate pages
 		]
 	}},
 	{ name: "reorder", type: "data", subtype: "nvs", size: 0x5000, data: nvs_config_reorder }
