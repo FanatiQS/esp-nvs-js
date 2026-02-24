@@ -1,13 +1,20 @@
 // @ts-check
 
-/// <reference path="./types.d.ts" />
-
+import assert from "node:assert";
 import { readFile, mkdir } from "node:fs/promises";
 import { createWriteStream } from "node:fs";
 import { exec } from "node:child_process";
 import { promisify } from "node:util";
-import assert from "node:assert";
 import { parse as csv_parse } from "csv-parse/sync";
+
+/**
+ * @typedef {object[]} test_partitions_config
+ * @property {string} name
+ * @property {string} type
+ * @property {string} subtype
+ * @property {number} size
+ * @property {import("./nvs_config.js").test_nvs_config} [data]
+ */
 
 // Default directory to use for generated files
 const default_dir = `${import.meta.dirname}/generated`;
@@ -41,7 +48,7 @@ function parse_int(input) {
 
 /**
  * Generates partition table and partitions binaries from configuration
- * @param {test_partitions} partitions
+ * @param {test_partitions_config} partitions
  * @param {string} [work_dir]
  */
 export async function firmware_generate(partitions, work_dir=default_dir) {
@@ -105,10 +112,10 @@ export async function firmware_generate(partitions, work_dir=default_dir) {
 }
 
 /**
- * Assembles firmware buffer from partition table and partition binaries
+ * Lists generated NVS partitions
  * @param {string} [work_dir]
  */
-export async function firmware_assemble(work_dir=default_dir) {
+export async function firmware_list(work_dir=default_dir) {
 	// Reads partition table binary file first for better error if files have not been generated
 	const partition_table_bin_path = `${work_dir}/partition_table.bin`;
 	const partition_table_bin_data = await readFile(partition_table_bin_path);
@@ -117,27 +124,22 @@ export async function firmware_assemble(work_dir=default_dir) {
 	const partition_table_csv_script = `python ${IDF_PATH}/components/partition_table/gen_esp32part.py ${partition_table_bin_path}`;
 	const { stdout: partition_table_csv_data } = await python(partition_table_csv_script);
 
-	// Creates table with partition table region
-	/** @type {test_page_map} */
-	const page_map = new Map();
-	page_map.set(0x8000, { read: false, data: new Uint8Array(partition_table_bin_data) });
+	// Creates partitions list with partition table region
+	const partitions = new Map([[ "partition_table", { addr: 0x8000, data: new Uint8Array(partition_table_bin_data) }]]);
 
-	// Registers NVS partitions pages in table
+	// Registers NVS partitions in partitions list
 	for (const [ name, type, subtype, addr, size ] of csv_parse(partition_table_csv_data, { comment: "#" })) {
 		if (type === "data" && subtype === "nvs") {
 			const page_size = 0x1000;
 			const addr_parsed = parse_int(addr);
 			const nvs_bin_data = await readFile(`${work_dir}/${name}.bin`);
 			assert(nvs_bin_data.byteLength === parse_int(size));
-			for (let i = 0; i < nvs_bin_data.byteLength; i += page_size) {
-				page_map.set(addr_parsed + i, {
-					name: name,
-					read: false,
-					data: new Uint8Array(nvs_bin_data.buffer, i, page_size)
-				});
-			}
+			partitions.set(name, {
+				addr: addr_parsed,
+				data: new Uint8Array(nvs_bin_data.buffer)
+			});
 		}
 	}
 
-	return page_map;
+	return partitions;
 }

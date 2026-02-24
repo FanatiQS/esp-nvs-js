@@ -2,6 +2,12 @@
 
 import assert from "node:assert";
 
+/**
+ * @typedef {import("../src/nvs_parser.js").nvs_value} nvs_value
+ * @typedef {{ [key: string]: { [key: string]: nvs_value } }} test_nvs_compare
+ * @typedef {{ [key: string]: { key: string, value: nvs_value, type?: string }[] }} test_nvs_config
+ */
+
 // NVS configuration data
 export const nvs_config_default = {
 	"uint-max": [

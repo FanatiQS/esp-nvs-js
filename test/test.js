@@ -1,22 +1,13 @@
 // @ts-check
 
-/// <reference path="./types.d.ts" />
-
 import assert from "node:assert";
 import test from "node:test";
 import { ESPLoader } from "esptool-js";
 
-import { loader_from_map } from "./loader.js";
-import { NVS, nvs_pages_lookup } from "../src/index.js";
-import { firmware_generate, firmware_assemble } from "./firmware.js";
-import {
-	nvs_config_default,
-	nvs_config2,
-	nvs_config_reorder,
-	nvs_config_page_space_usable,
-	nvs_config_assert,
-	nvs_config_assert_nvs
-} from "./nvs_config.js";
+import { NVS } from "../src/index.js";
+import { loader_from_map, loader_map_get_addr, loader_map_get_data, loader_map_from, loader_map_fetch, loader_fetch } from "./loader.js";
+import { firmware_generate } from "./firmware.js";
+import { nvs_config_default, nvs_config2, nvs_config_reorder, nvs_config_assert, nvs_config_assert_nvs, nvs_config_page_space_usable } from "./nvs_config.js";
 import "./stub_serialport.js";
 
 // Prevents ESPLoader from printing to the console
@@ -44,10 +35,6 @@ await firmware_generate([
 	{ name: "reorder", type: "data", subtype: "nvs", size: 0x5000, data: nvs_config_reorder }
 ]);
 
-// Creates loader using generated firmware buffer
-const page_map_default = await firmware_assemble();
-const loader_default = loader_from_map(page_map_default);
-
 
 
 /**
@@ -55,21 +42,9 @@ const loader_default = loader_from_map(page_map_default);
  * @param {string} partition_name
  */
 async function* pages_reorder(partition_name) {
-	/** @type {test_page_map} */
-	const page_map_copy = new Map();
-
-	// Deep copies page map for modification
-	for (const [ addr, page ] of page_map_default) {
-		if (page.name === partition_name) {
-			page_map_copy.set(addr, { ...page });
-		}
-	}
-	const nvs_pages = Array.from(page_map_copy.values());
-
-	// Adds partition table to page map copy
-	const partition_table_map_entry = page_map_default.get(0x8000);
-	assert(partition_table_map_entry);
-	page_map_copy.set(0x8000, partition_table_map_entry);
+	const loader_map = await loader_map_fetch(partition_name);
+	const nvs_pages = Array.from(loader_map.values()).filter((page) => !page.is_table);
+	assert(nvs_pages.length > 1);
 
 	// Goes through all NVS page order permutations
 	const counters = new Array(nvs_pages.length).fill(0);
@@ -84,7 +59,7 @@ async function* pages_reorder(partition_name) {
 			i = 1;
 
 			// Instantiates NVS parser with page map permutation
-			const nvs = new NVS(loader_from_map(page_map_copy));
+			const nvs = new NVS(loader_from_map(loader_map));
 			const found = await nvs.fetchPartition(partition_name);
 			assert(found);
 			yield nvs;
@@ -96,89 +71,46 @@ async function* pages_reorder(partition_name) {
 	}
 }
 
-/**
- * Clones first nvs page for specified partition so it can safely be modified since just creating a new map from another is a shallow copy
- * @param {ESPLoader} loader
- * @param {test_page_map} page_map_modified
- * @param {string} [partition_name]
- */
-async function page_editable(loader, page_map_modified, partition_name) {
-	assert(page_map_modified !== page_map_default);
-
-	const addr_list = /** @type {number[]} */([]);
-	await loader.connect();
-	assert(await nvs_pages_lookup(loader, addr_list, partition_name));
-	const [ addr ] = addr_list;
-	const page = page_map_modified.get(addr);
-	assert(page);
-
-	const data = new Uint8Array(page.data);
-	page_map_modified.set(addr, {
-		name: page.name,
-		read: false,
-		data: data
-	});
-	return data;
-}
-
 
 
 // Assert that all pages in manually specified NVS partition are requested
 test("set pages assert all requested", async () => {
-	const addr = 0x9000;
-	const size = 0x4000;
-	const page_size = 0x1000;
-
-	// Creates loader map with partition table that should not be read
-	/** @type {test_page_map} */
-	const page_map = new Map();
-	const partition_table = { read: false, data: new Uint8Array(0) };
-	page_map.set(0x8000, partition_table);
-
-	// Adds NVS pages to loader map
-	const nvs_pages = [];
-	for (let i = 0; i < size; i += page_size) {
-		const page = { read: false, data: new Uint8Array(page_size).fill(0xff) };
-		nvs_pages.push(page);
-		page_map.set(addr + i, page);
-	}
+	// Creates loader map without partition table
+	const addr = await loader_map_get_addr("nvs");
+	const data = await loader_map_get_data("nvs");
+	const loader_map = loader_map_from(addr, data);
 
 	// Reads manually specified partition
-	const nvs = new NVS(loader_from_map(page_map));
-	nvs.setPartition(addr, size);
+	const nvs = new NVS(loader_from_map(loader_map));
+	nvs.setPartition(addr, data.byteLength);
 	await nvs.next();
 
-	// Asserts that all default NVS pages were read and nothing else
-	assert(!partition_table.read);
-	for (const page of nvs_pages) {
+	// Asserts that all NVS pages were read
+	for (const page of loader_map.values()) {
 		assert(page.read);
 	}
 });
 
 // Asserts that all pages in default NVS partition are requested
 test("fetch pages assert all requested", async () => {
-	// Clears read flag from previous tests
-	for (const entry of page_map_default.values()) {
-		entry.read = false;
-	}
+	// Creates loader map with partition table
+	const loader_map = await loader_map_fetch();
 
 	// Reads default partition
-	const nvs = new NVS(loader_default);
+	const nvs = new NVS(loader_from_map(loader_map));
 	const found = await nvs.fetchPartition();
 	assert(found);
 	await nvs.all();
 
-	// Asserts that all default NVS pages were read along with partition table but nothing else
-	for (const entry of page_map_default.values()) {
-		if (!entry.name || entry.name === "nvs") {
-			assert(entry.read);
-		}
+	// Asserts that all default NVS pages were read along with partition table
+	for (const entry of loader_map.values()) {
+		assert(entry.read);
 	}
 });
 
 // Asserts that specifying a non default NVS partition parses correct partition
-test("non default nvs partition", async () => {
-	const nvs = new NVS(loader_default);
+test("load and parse non default nvs partition", async () => {
+	const nvs = new NVS(await loader_fetch("nvs2"));
 	const found = await nvs.fetchPartition("nvs2");
 	assert(found);
 	await nvs.all();
@@ -187,7 +119,7 @@ test("non default nvs partition", async () => {
 
 // Searches for NVS partition by name without success
 test("missing nvs partition", async () => {
-	const nvs = new NVS(loader_default);
+	const nvs = new NVS(await loader_fetch());
 	const found = await nvs.fetchPartition("no-exist");
 	assert(found === false);
 });
@@ -195,36 +127,36 @@ test("missing nvs partition", async () => {
 
 
 // Asserts iterator data is identical to configuration used to create it
-test("parser", async () => {
-	const nvs = new NVS(loader_default);
+test("load and parse default nvs partition", async () => {
+	const nvs = new NVS(await loader_fetch());
 	await nvs.all();
 	nvs_config_assert_nvs(nvs_config_default, nvs);
 });
 
 // Searching for specified value
 test("search for value", async () => {
-	const nvs = new NVS(loader_default);
+	const nvs = new NVS(await loader_fetch());
 	const value = await nvs.get("extra", "duplicate");
 	assert(value === 1);
 });
 
 // Searching for non existent namespace
 test("no existent namespace", async () => {
-	const nvs = new NVS(loader_default);
+	const nvs = new NVS(await loader_fetch());
 	const value = await nvs.get("foo", "bar");
 	assert(value === null);
 });
 
 // Searching for non existent key
 test("no existent key", async () => {
-	const nvs = new NVS(loader_default);
+	const nvs = new NVS(await loader_fetch());
 	const value = await nvs.get("extra", "foo");
 	assert(value === null);
 });
 
 // Searching for key in empty namespace
 test("empty namespace", async () => {
-	const nvs = new NVS(loader_default);
+	const nvs = new NVS(await loader_fetch());
 	const value = await nvs.get("empty", "foo");
 	assert(value === null);
 });
@@ -246,37 +178,28 @@ test("full value between blob chunks in search", async () => {
 
 // Asserts that clearing out some of the pages will result in an incomplete blob when iterating
 test("incomplete blob in iterator", async () => {
-	let done = false;
-	for (const [ addr, page ] of page_map_default) {
-		if (page.name === "reorder") {
-			// Blanks out NVS page and parses modified page map
-			const page_map_modified = new Map(page_map_default);
-			page_map_modified.set(addr, {
-				name: page.name,
-				read: false,
-				data: new Uint8Array(page.data.byteLength).fill(0xff)
-			});
-			const nvs = new NVS(loader_from_map(page_map_modified));
-			await nvs.fetchPartition("reorder");
-			await nvs.all();
+	const loader_map = await loader_map_fetch("reorder");
+	assert(Array.from(loader_map.values()).some(async (page) => {
+		// Blanks out NVS page and parses everything
+		page.data.fill(0xff);
+		const nvs = new NVS(loader_from_map(loader_map));
+		await nvs.fetchPartition("reorder");
+		await nvs.all();
 
-			// Test successful when iterating over nvs throws because of incomplete blob
-			const iterator = nvs[Symbol.iterator]();
-			try {
-				while (!iterator.next().done);
-			}
-			catch {
-				done = true;
-				break;
-			}
+		// Test successful when iterating over nvs throws because of incomplete blob
+		const iterator = nvs[Symbol.iterator]();
+		try {
+			while (!iterator.next().done);
 		}
-	}
-	assert(done);
+		catch {
+			return true;
+		}
+	}));
 });
 
 // Parsing should do nothing if it has already parsed to the end
 test("nothing after complete", async () => {
-	const nvs = new NVS(loader_default);
+	const nvs = new NVS(await loader_fetch());
 	await nvs.all();
 	await nvs.all();
 });
@@ -285,14 +208,16 @@ test("nothing after complete", async () => {
 
 // Not allowed to set partition when already defined
 test("no double set partition", async () => {
-	const nvs = new NVS(loader_default);
-	nvs.setPartition(0x9000, 0x6000);
-	assert.throws(() => nvs.setPartition(0x9000, 0x6000));
+	const addr = 0x9000;
+	const size = 0x6000;
+	const nvs = new NVS(loader_from_map(new Map()));
+	nvs.setPartition(addr, size);
+	assert.throws(() => nvs.setPartition(addr, size));
 });
 
 // Not allowed to fetch partition when already defined
 test("no double fetch partition", async () => {
-	const nvs = new NVS(loader_default);
+	const nvs = new NVS(await loader_fetch());
 	const found = await nvs.fetchPartition();
 	assert(found);
 	await assert.rejects(() => nvs.fetchPartition());
@@ -300,18 +225,18 @@ test("no double fetch partition", async () => {
 
 // Asserts empty partition table can fetch without reject and fails on .next
 test("empty partition table", async () => {
-	const page_map = new Map();
-	page_map.set(0x8000, { read: false, data: new Uint8Array(0xc00).fill(0xff) });
-	const nvs = new NVS(loader_from_map(page_map));
+	const partition_table_data = await loader_map_get_data("partition_table");
+	const loader_map = new Map([[ 0x8000, { is_table: true, read: false, data: partition_table_data.fill(0xff) } ]]);
+	const nvs = new NVS(loader_from_map(loader_map));
 	assert(!await nvs.fetchPartition());
 	await assert.rejects(async () => await nvs.next());
 });
 
 // Asserts zeroed out partition table can fetch without reject and fails on .next
 test("zeroed partition table", async () => {
-	const page_map = new Map();
-	page_map.set(0x8000, { read: false, data: new Uint8Array(0xc00) });
-	const nvs = new NVS(loader_from_map(page_map));
+	const partition_table_data = await loader_map_get_data("partition_table");
+	const loader_map = new Map([[ 0x8000, { is_table: true, read: false, data: partition_table_data.fill(0x00) } ]]);
+	const nvs = new NVS(loader_from_map(loader_map));
 	assert(!await nvs.fetchPartition());
 	await assert.rejects(async () => await nvs.next());
 });
@@ -320,7 +245,7 @@ test("zeroed partition table", async () => {
 
 // Reject multiple keys in the same namespace
 test("duplicate keys", async () => {
-	const nvs = new NVS(loader_default);
+	const nvs = new NVS(await loader_fetch());
 	const found = await nvs.fetchPartition("duplicate-keys");
 	assert(found);
 	await assert.rejects(async () => await nvs.all());
@@ -328,7 +253,7 @@ test("duplicate keys", async () => {
 
 // Reject blob data entry that uses the same key as entry with other data type
 test("blob data collide with string", async () => {
-	const nvs = new NVS(loader_default);
+	const nvs = new NVS(await loader_fetch());
 	const found = await nvs.fetchPartition("blob-data-on-str");
 	assert(found);
 	await assert.rejects(async () => await nvs.all());
@@ -344,10 +269,11 @@ test("blob index collide with string", async () => {
 // Asserts invalid entry state is rejected
 test("invalid entry state", async () => {
 	const addr_bitmap_offset = 32;
-	const page_map_modified = new Map(page_map_default);
-	const loader = loader_from_map(page_map_modified);
-	const data = await page_editable(loader, page_map_modified);
+	const data = await loader_map_get_data("nvs");
 	data[addr_bitmap_offset] = 0x01;
+
+	const loader_map = loader_map_from(await loader_map_get_addr("nvs"), data);
+	const loader = loader_from_map(loader_map);
 	const nvs = new NVS(loader);
 	await assert.rejects(async () => await nvs.all());
 });
@@ -355,10 +281,11 @@ test("invalid entry state", async () => {
 // Asserts invalid entry type is rejected
 test("invalid entry type", async () => {
 	const addr_entry_offset = 64;
-	const page_map_modified = new Map(page_map_default);
-	const loader = loader_from_map(page_map_modified);
-	const data = await page_editable(loader, page_map_modified);
+	const data = await loader_map_get_data("nvs");
 	data.fill(0xff, addr_entry_offset);
+
+	const loader_map = loader_map_from(await loader_map_get_addr("nvs"), data);
+	const loader = loader_from_map(loader_map);
 	const nvs = new NVS(loader);
 	await assert.rejects(async () => await nvs.all());
 });
@@ -372,17 +299,17 @@ test("JSON not support BigInt", () => {
 
 // Asserts that output from .toJSON can be serialized
 test("JSON serializable", async () => {
-	const nvs = new NVS(loader_default);
+	const nvs = new NVS(await loader_fetch());
 	await nvs.all();
 	JSON.stringify(nvs.toJSON());
 });
 
 // Asserts JSON data is identical to configuration used to create it
 test("parsed JSON", async () => {
-	const nvs = new NVS(loader_default);
+	const nvs = new NVS(await loader_fetch());
 	await nvs.all();
 
-	/** @type {test_nvs_compare} */
+	/** @type {import("./nvs_config.js").test_nvs_compare} */
 	const cmp_json = {};
 	for (const [ namespace, object ] of Object.entries(nvs.toJSON())) {
 		const entries = Object.entries(object);
