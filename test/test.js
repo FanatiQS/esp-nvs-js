@@ -6,34 +6,11 @@ import { ESPLoader } from "esptool-js";
 
 import { NVS } from "../src/index.js";
 import { loader_from_map, loader_map_get_addr, loader_map_get_data, loader_map_from, loader_map_fetch, loader_fetch } from "./loader.js";
-import { firmware_generate } from "./firmware.js";
-import { nvs_config_default, nvs_config2, nvs_config_reorder, nvs_config_assert, nvs_config_assert_nvs, nvs_config_page_space_usable } from "./nvs_config.js";
+import { nvs_config_default, nvs_config2, nvs_config_reorder, nvs_config_assert, nvs_config_assert_nvs } from "./nvs_config.js";
 import "./stub_serialport.js";
 
 // Prevents ESPLoader from printing to the console
 ESPLoader.prototype.write = () => {};
-
-// Generates firmware buffer
-await firmware_generate([
-	{ name: "phy_init", type: "data", subtype: "phy", size: 0x1000 },
-	{ name: "nvs", type: "data", subtype: "nvs", size: 0x6000, data: nvs_config_default },
-	{ name: "factory", type: "app", subtype: "factory", size: 0x10000 },
-	{ name: "nvs2", type: "data", subtype: "nvs", size: 0x4000, data: nvs_config2 },
-	{ name: "duplicate-keys", type: "data", subtype: "nvs", size: 0x3000, data: {
-		"foo": [
-			{ key: "bar", type: "u8", value: 1 },
-			{ key: "bar", type: "i16", value: 2 }
-		]
-	}},
-	{ name: "blob-data-on-str", type: "data", subtype: "nvs", size: 0x5000, data: {
-		"foo": [
-			{ key: "baz", value: "0".repeat(nvs_config_page_space_usable - 1 - 32) }, // string filling to end of page
-			{ key: "bar", value: 1, type: "u8" }, // dummy data since string can for some reason not fill page by itself
-			{ key: "baz", value: new Uint8Array(nvs_config_page_space_usable).map((value, index) => index) } // blob with data and index in separate pages
-		]
-	}},
-	{ name: "reorder", type: "data", subtype: "nvs", size: 0x5000, data: nvs_config_reorder }
-]);
 
 
 

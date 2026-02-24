@@ -1,7 +1,7 @@
 // @ts-check
 
 import assert from "node:assert";
-import { firmware_list } from "./firmware.js";
+import { partitions_generate, partitions_cache } from "./partitions.js";
 
 /**
  * @typedef {Map<number, { is_table: boolean, read: boolean, data: Uint8Array }>} loader_map
@@ -64,8 +64,9 @@ export function loader_from_map(loader_map) {
 
 
 
-// Gets generated partitions list
-const partitions = await firmware_list();
+// Generates partition files and gets list
+await partitions_generate();
+const partitions = await partitions_cache();
 
 /**
  * Gets flash address of specified partition

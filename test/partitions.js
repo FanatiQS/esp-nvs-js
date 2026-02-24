@@ -7,6 +7,8 @@ import { exec } from "node:child_process";
 import { promisify } from "node:util";
 import { parse as csv_parse } from "csv-parse/sync";
 
+import { nvs_config_default, nvs_config2, nvs_config_reorder, nvs_config_page_space_usable } from "./nvs_config.js";
+
 /**
  * @typedef {object[]} test_partitions_config
  * @property {string} name
@@ -25,6 +27,29 @@ const python = promisify(exec);
 // Gets path to installed and set up ESP-IDF SDK for python scripts
 const { IDF_PATH } = process.env;
 assert(IDF_PATH, "ESP-IDF not available");
+
+// Configuration for partition table and NVS partitions generation
+/** @type {test_partitions_config} */
+const partitions_config = [
+	{ name: "phy_init", type: "data", subtype: "phy", size: 0x1000 },
+	{ name: "nvs", type: "data", subtype: "nvs", size: 0x6000, data: nvs_config_default },
+	{ name: "factory", type: "app", subtype: "factory", size: 0x10000 },
+	{ name: "nvs2", type: "data", subtype: "nvs", size: 0x4000, data: nvs_config2 },
+	{ name: "duplicate-keys", type: "data", subtype: "nvs", size: 0x3000, data: {
+		"foo": [
+			{ key: "bar", type: "u8", value: 1 },
+			{ key: "bar", type: "i16", value: 2 }
+		]
+	}},
+	{ name: "blob-data-on-str", type: "data", subtype: "nvs", size: 0x5000, data: {
+		"foo": [
+			{ key: "baz", value: "0".repeat(nvs_config_page_space_usable - 1 - 32) }, // string filling to end of page
+			{ key: "bar", value: 1, type: "u8" }, // dummy data since string can for some reason not fill page by itself
+			{ key: "baz", value: new Uint8Array(nvs_config_page_space_usable).map((value, index) => index) } // blob with data and index in separate pages
+		]
+	}},
+	{ name: "reorder", type: "data", subtype: "nvs", size: 0x5000, data: nvs_config_reorder }
+];
 
 /**
  * Parses number represented as string
@@ -48,10 +73,9 @@ function parse_int(input) {
 
 /**
  * Generates partition table and partitions binaries from configuration
- * @param {test_partitions_config} partitions
  * @param {string} [work_dir]
  */
-export async function firmware_generate(partitions, work_dir=default_dir) {
+export async function partitions_generate(work_dir=default_dir) {
 	// Creates partition table CSV file
 	await mkdir(work_dir, { recursive: true });
 	const partition_table_csv_path = `${work_dir}/partition_table.csv`;
@@ -59,7 +83,7 @@ export async function firmware_generate(partitions, work_dir=default_dir) {
 	partition_table_csv.write("#name,type,subtype,offset,size,flags\n");
 
 	// Writes configuration to partition table CSV file and its optional data to separate CSV file
-	for (const { name, type: partition_type, subtype, size, data } of partitions) {
+	for (const { name, type: partition_type, subtype, size, data } of partitions_config) {
 		partition_table_csv.write(`${name},${partition_type},${subtype},,0x${size.toString(16)},\n`);
 
 		// Only generates NVS CSV if data is available
@@ -112,10 +136,10 @@ export async function firmware_generate(partitions, work_dir=default_dir) {
 }
 
 /**
- * Lists generated NVS partitions
+ * Caches generated NVS partitions
  * @param {string} [work_dir]
  */
-export async function firmware_list(work_dir=default_dir) {
+export async function partitions_cache(work_dir=default_dir) {
 	// Reads partition table binary file first for better error if files have not been generated
 	const partition_table_bin_path = `${work_dir}/partition_table.bin`;
 	const partition_table_bin_data = await readFile(partition_table_bin_path);
@@ -130,12 +154,10 @@ export async function firmware_list(work_dir=default_dir) {
 	// Registers NVS partitions in partitions list
 	for (const [ name, type, subtype, addr, size ] of csv_parse(partition_table_csv_data, { comment: "#" })) {
 		if (type === "data" && subtype === "nvs") {
-			const page_size = 0x1000;
-			const addr_parsed = parse_int(addr);
 			const nvs_bin_data = await readFile(`${work_dir}/${name}.bin`);
 			assert(nvs_bin_data.byteLength === parse_int(size));
 			partitions.set(name, {
-				addr: addr_parsed,
+				addr: parse_int(addr),
 				data: new Uint8Array(nvs_bin_data.buffer)
 			});
 		}
