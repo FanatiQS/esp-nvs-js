@@ -13,6 +13,7 @@ export class Loader {
 	 */
 	constructor(loader_map) {
 		this.connected = false;
+		this.stubbed = false;
 		this.loader_map = loader_map;
 	}
 
@@ -40,9 +41,18 @@ export class Loader {
 	}
 
 	async connect() {
+		assert(this.connected === false);
 		this.connected = true;
 	}
-	async runStub() {}
+
+	async runStub() {
+		assert(this.stubbed === false);
+		this.stubbed = true;
+	}
+
+	get chip() {
+		return (this.connected) ? {} : null;
+	}
 }
 
 /**
