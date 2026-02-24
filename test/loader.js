@@ -1,6 +1,6 @@
 // @ts-check
 
-import assert from "node:assert";
+import { assert } from "./assert.js";
 import { partitions_generate, partitions_cache } from "./partitions.js";
 
 /**

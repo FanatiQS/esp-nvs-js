@@ -1,10 +1,10 @@
 // @ts-check
 
-import assert from "node:assert";
 import test from "node:test";
-import { ESPLoader } from "esptool-js";
-
 import { NVS } from "../src/index.js";
+import { ESPLoader } from "../src/esptool.js";
+
+import { assert } from "./assert.js";
 import { loader_from_map, loader_map_get_addr, loader_map_get_data, loader_map_from, loader_map_fetch, loader_fetch } from "./loader.js";
 import { nvs_config_default, nvs_config2, nvs_config_reorder, nvs_config_assert, nvs_config_assert_nvs } from "./nvs_config.js";
 import "./stub_serialport.js";
@@ -197,7 +197,7 @@ test("no double fetch partition", async () => {
 	const nvs = new NVS(await loader_fetch());
 	const found = await nvs.fetchPartition();
 	assert(found);
-	await assert.rejects(() => nvs.fetchPartition());
+	await assert.isRejected(nvs.fetchPartition());
 });
 
 // Asserts empty partition table can fetch without reject and fails on .next
@@ -206,7 +206,7 @@ test("empty partition table", async () => {
 	const loader_map = new Map([[ 0x8000, { is_table: true, read: false, data: partition_table_data.fill(0xff) } ]]);
 	const nvs = new NVS(loader_from_map(loader_map));
 	assert(!await nvs.fetchPartition());
-	await assert.rejects(async () => await nvs.next());
+	await assert.isRejected(nvs.all());
 });
 
 // Asserts zeroed out partition table can fetch without reject and fails on .next
@@ -215,7 +215,7 @@ test("zeroed partition table", async () => {
 	const loader_map = new Map([[ 0x8000, { is_table: true, read: false, data: partition_table_data.fill(0x00) } ]]);
 	const nvs = new NVS(loader_from_map(loader_map));
 	assert(!await nvs.fetchPartition());
-	await assert.rejects(async () => await nvs.next());
+	await assert.isRejected(nvs.all());
 });
 
 
@@ -225,7 +225,7 @@ test("duplicate keys", async () => {
 	const nvs = new NVS(await loader_fetch());
 	const found = await nvs.fetchPartition("duplicate-keys");
 	assert(found);
-	await assert.rejects(async () => await nvs.all());
+	await assert.isRejected(nvs.all());
 });
 
 // Reject blob data entry that uses the same key as entry with other data type
@@ -233,38 +233,42 @@ test("blob data collide with string", async () => {
 	const nvs = new NVS(await loader_fetch());
 	const found = await nvs.fetchPartition("blob-data-on-str");
 	assert(found);
-	await assert.rejects(async () => await nvs.all());
+	await assert.isRejected(nvs.all());
 });
 
 // Reject blob index entry that uses the same key as entry with other data type
 test("blob index collide with string", async () => {
 	for await (const nvs of pages_reorder("blob-data-on-str")) {
-		await assert.rejects(async () => await nvs.all());
+		await assert.isRejected(nvs.all());
 	}
 });
 
 // Asserts invalid entry state is rejected
 test("invalid entry state", async () => {
+	// Set only invalid entry state
 	const addr_bitmap_offset = 32;
 	const data = await loader_map_get_data("nvs");
 	data[addr_bitmap_offset] = 0x01;
 
+	// Asserts parsing buffer with invalid entry state is rejected
 	const loader_map = loader_map_from(await loader_map_get_addr("nvs"), data);
 	const loader = loader_from_map(loader_map);
 	const nvs = new NVS(loader);
-	await assert.rejects(async () => await nvs.all());
+	await assert.isRejected(nvs.all());
 });
 
 // Asserts invalid entry type is rejected
 test("invalid entry type", async () => {
+	// Clears all entry data while keeping entry states to parse invalid data
 	const addr_entry_offset = 64;
 	const data = await loader_map_get_data("nvs");
 	data.fill(0xff, addr_entry_offset);
 
+	// Asserts that parsing invalid data rejects
 	const loader_map = loader_map_from(await loader_map_get_addr("nvs"), data);
 	const loader = loader_from_map(loader_map);
 	const nvs = new NVS(loader);
-	await assert.rejects(async () => await nvs.all());
+	await assert.isRejected(nvs.all());
 });
 
 

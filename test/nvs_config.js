@@ -1,6 +1,6 @@
 // @ts-check
 
-import assert from "node:assert";
+import { assert } from "./assert.js";
 
 /**
  * @typedef {import("../src/nvs_parser.js").nvs_value} nvs_value
