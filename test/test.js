@@ -65,7 +65,7 @@ test("set pages assert all requested", async () => {
 	// Reads manually specified partition
 	const nvs = new NVS(loader_from_map(loader_map));
 	nvs.setPartition(addr, data.byteLength);
-	await nvs.next();
+	await nvs.all();
 
 	// Asserts that all NVS pages were read
 	for (const page of loader_map.values()) {
