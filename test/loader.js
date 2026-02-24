@@ -1,7 +1,6 @@
 // @ts-check
 
 import { assert } from "./assert.js";
-import { partitions_generate, partitions_cache } from "./partitions.js";
 
 /**
  * @typedef {Map<number, { is_table: boolean, read: boolean, data: Uint8Array }>} loader_map
@@ -64,18 +63,16 @@ export function loader_from_map(loader_map) {
 
 
 
-// Generates partition files and gets list
-await partitions_generate();
-const partitions = await partitions_cache();
-
 /**
  * Gets flash address of specified partition
  * @param {string} partition_name
  */
 export async function loader_map_get_addr(partition_name="nvs") {
-	const partition = partitions.get(partition_name);
-	assert(partition);
-	return partition.addr;
+	const response = await fetch(`/api/addr/${partition_name}`);
+	assert(response.status === 200);
+	const addr = await response.json();
+	assert(typeof addr === "number");
+	return addr;
 }
 
 /**
@@ -83,9 +80,17 @@ export async function loader_map_get_addr(partition_name="nvs") {
  * @param {string} [name]
  */
 export async function loader_map_get_data(name="nvs") {
-	let partition = partitions.get(name);
-	assert(partition);
-	return new Uint8Array(partition.data);
+	const response = await fetch(`/api/data/${name}`);
+	assert(response.status === 200);
+
+	// NVS partitions data is served as a string to prevent web-test-runner from trying to serialize it incorrectly
+	const text = await response.text();
+	const data = new Uint8Array(text.length);
+	for (let i = 0; i < data.byteLength; i++) {
+		data[i] = text.charCodeAt(i);
+	}
+
+	return data;
 }
 
 /**
@@ -97,7 +102,7 @@ export function loader_map_from(addr, data) {
 	/** @type {loader_map} */
 	const loader_map = new Map();
 
-	// Adds nvs partitions split by pages to loader map
+	// Adds nvs partitions to loader map, split by pages
 	const page_size = 0x1000;
 	assert(!(data.byteLength % page_size));
 	for (let i = 0; i < data.byteLength; i += page_size) {

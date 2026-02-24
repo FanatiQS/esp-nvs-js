@@ -9,7 +9,12 @@
 		"esptool-js": "0.5.6"
 	},
 	"devDependencies": {
+		"@types/chai-as-promised": "^8.0.2",
+		"@types/mocha": "^10.0.10",
 		"@types/node": "^25.1.0",
+		"@web/test-runner": "^0.20.2",
+		"chai": "^6.2.2",
+		"chai-as-promised": "^8.0.2",
 		"csv-parse": "^6.1.0",
 		"eslint": "^9.39.2",
 		"typescript": "^5.9.3"

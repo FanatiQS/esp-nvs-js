@@ -7,8 +7,8 @@ import { defineConfig } from "eslint/config";
 const rules_base = {
 	"one-var": [ "error", "never" ],
 	"func-style": [ "error", "declaration" ],
-	"object-shorthand": [ "error", "consistent-as-needed" ],
-	"id-length": [ "error", { min: 3, exceptions: [ "i", "j", "ns" ] } ],
+	"object-shorthand": [ "error", "methods" ],
+	"id-length": [ "error", { min: 3, exceptions: [ "i", "j", "ns", "ui" ] } ],
 	"capitalized-comments": [ "error", "always", { ignoreInlineComments: true, ignorePattern: "cspell: .*" } ],
 	"eqeqeq": [ "error", "always", { null: "ignore" } ],
 	"complexity": [ "error", { variant: "modified" } ],
@@ -30,10 +30,20 @@ const rules_base = {
 	"no-multi-assign": "off",
 	"no-magic-numbers": "off",
 	"sort-keys": "off",
-	"sort-imports": "off"
+	"sort-imports": "off",
+	"no-undefined": "off"
 };
 
+// Test server files that run in node
+const files_server = [
+	"test/index.js",
+	"test/partitions.js"
+];
+
 export default defineConfig([
+	{
+		ignores: [ "coverage/**/*" ]
+	},
 	{
 		files: [ "src/**/*.js" ],
 		plugins: { js },
@@ -51,12 +61,14 @@ export default defineConfig([
 	},
 	{
 		files: [ "test/**/*.js" ],
+		ignores: files_server,
 		plugins: { js },
 		extends: [ "js/all" ],
 		languageOptions: {
 			globals: {
 				SerialPort: true,
-				...globals.nodeBuiltin
+				test: true,
+				...globals.browser
 			}
 		},
 		rules: {
@@ -66,6 +78,21 @@ export default defineConfig([
 			"class-methods-use-this": "off",
 			"capitalized-comments": "off",
 			"require-await": "off"
+		}
+	},
+	{
+		files: [
+			"test/index.js",
+			"test/partitions.js"
+		],
+		plugins: { js },
+		extends: [ "js/all" ],
+		languageOptions: {
+			globals: { ...globals.nodeBuiltin }
+		},
+		rules: {
+			...rules_base,
+			"capitalized-comments": "off"
 		}
 	}
 ]);

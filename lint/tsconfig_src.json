@@ -8,6 +8,12 @@
 	},
 	"include": [
 		"../src/*.js",
-		"../src/esptool.d.ts"
+		"../src/esptool.d.ts",
+		"../test/*.js"
+	],
+	"exclude": [
+		"../test/index.js",
+		"../test/partitions.js",
+		"../test/import_hook.js"
 	]
 }

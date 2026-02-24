@@ -1,16 +1,21 @@
 // @ts-check
 
-import test from "node:test";
 import { NVS } from "../src/index.js";
 import { ESPLoader } from "../src/esptool.js";
 
 import { assert } from "./assert.js";
 import { loader_from_map, loader_map_get_addr, loader_map_get_data, loader_map_from, loader_map_fetch, loader_fetch } from "./loader.js";
 import { nvs_config_default, nvs_config2, nvs_config_reorder, nvs_config_assert, nvs_config_assert_nvs } from "./nvs_config.js";
-import "./stub_serialport.js";
 
 // Prevents ESPLoader from printing to the console
 ESPLoader.prototype.write = () => {};
+
+// Creates a SerialPort that can be compared with the SerialPort global and initialize ESPLoader
+function serialport_stub() {
+	const port = Object.create(SerialPort.prototype);
+	port.getInfo = () => ({});
+	return port;
+}
 
 
 
@@ -171,6 +176,7 @@ test("incomplete blob in iterator", async () => {
 		catch {
 			return true;
 		}
+		return false;
 	}));
 });
 
@@ -319,13 +325,13 @@ test("parsed JSON", async () => {
 // Asserts that a type cast used in the NVS constructor is still required
 test("internal cast required", () => {
 	// @ts-expect-error
-	new ESPLoader({ port: new SerialPort() });
+	new ESPLoader({ port: serialport_stub() });
 });
 
 // Ensures constructor with serial port creates ESPLoader using serial port
 test("serial port NVS constructor argument", () => {
 	let called = false;
-	const port = new SerialPort();
+	const port = serialport_stub();
 	port.getInfo = () => {
 		called = true;
 		return {};

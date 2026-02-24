@@ -5,6 +5,8 @@
 		"module": "esnext"
 	},
 	"include": [
-		"../test/*.js"
-	]
+		"../test/index.js",
+		"../test/partitions.js"
+	],
+	"exclude": []
 }

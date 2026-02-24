@@ -27,13 +27,13 @@ jobs:
               with:
                 source_dir: ./src
                 output_dir: ./_site/docs
-                tsconfig: ./lint/tsconfig_src.json
+                tsconfig_file: ./lint/tsconfig_src.json
 
             - run: cp -r ./examples ./_site/examples
             - run: cp -r ./src ./_site/src
 
             - run: npm test
-            - run: npx lcov-badge2 lcov.info -l Coverage -o ./_site/coverage.svg
+            - run: npx lcov-badge2 coverage/lcov.info -l Coverage -o ./_site/coverage.svg
               if: ${{ !cancelled() }}
 
             - uses: actions/upload-pages-artifact@v4
