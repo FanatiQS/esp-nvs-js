@@ -31,6 +31,7 @@ jobs:
 
             - run: cp -r ./examples ./_site/examples
             - run: cp -r ./src ./_site/src
+            - run: cp -r ./coverage/lcov-report ./_site/coverage
 
             - run: npm test
             - run: npx lcov-badge2 coverage/lcov.info -l Coverage -o ./_site/coverage.svg
