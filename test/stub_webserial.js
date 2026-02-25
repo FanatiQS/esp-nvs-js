@@ -1,10 +1,10 @@
 // @ts-check
 
-import { SerialPortStub } from "./stub_serialport.js";
+import { serialport_stub } from "./stub_serialport.js";
 
 class SerialStub {
 	async requestPort() {
-		return new SerialPortStub();
+		return serialport_stub();
 	}
 
 	async getPorts() {
