@@ -314,6 +314,13 @@ test("parsed JSON", async () => {
 	nvs_config_assert(nvs_config_default, cmp_json);
 });
 
+// Asserts that .toHTML function and underlying transformer generates table without exceptions
+test("HTML generation", async () => {
+	const nvs = new NVS(await loader_fetch());
+	await nvs.all();
+	assert(nvs.toHTML() instanceof HTMLElement);
+});
+
 
 
 // Asserts that a type cast used in the NVS constructor is still required
@@ -331,6 +338,13 @@ test("serial port NVS constructor argument", async () => {
 	};
 	const nvs = new NVS(port);
 	assert(await nvs.connect().catch((err) => err === indicator));
+});
+
+// Ensures using non existing port throws since indexing into array can always be undefined
+test("not found serial port", async () => {
+	const ports = await navigator.serial.getPorts();
+	const port = ports[ports.length];
+	assert.throws(() => new NVS(port));
 });
 
 // Ensures wrong type of argument is rejected by typescript
