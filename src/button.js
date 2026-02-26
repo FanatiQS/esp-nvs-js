@@ -26,6 +26,14 @@ class AsyncButton extends HTMLButtonElement {
 						return wrapper?.callback;
 					},
 					set: (callback) => {
+						// Only wraps functions argument
+						if (typeof callback !== "function") {
+							// @ts-ignore
+							super[key] = callback;
+							return;
+						}
+
+						// Wraps function argument in dispatcher
 						/** @param {Event} event */
 						const wrapper = (event) => this.dispatch(callback, event);
 						wrapper.callback = callback;
