@@ -33,7 +33,7 @@ jobs:
             - run: cp -r ./src ./_site/src
 
             - run: npm test
-            - run: mv -r ./coverage/lcov-report ./_site/coverage
+            - run: mv ./coverage/lcov-report ./_site/coverage
               if: ${{ !cancelled() }}
             - run: npx lcov-badge2 coverage/lcov.info -l Coverage -o ./_site/coverage.svg
               if: ${{ !cancelled() }}
