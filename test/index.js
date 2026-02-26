@@ -10,7 +10,10 @@ const partitions = await partitions_cache();
 await startTestRunner({
 	autoExitProcess: true,
 	config: {
-		files: [ `${import.meta.dirname}/test.js` ],
+		files: [
+			`${import.meta.dirname}/test.js`,
+			`${import.meta.dirname}/button.html`
+		],
 		nodeResolve: true,
 		coverage: true,
 		testFramework: {
