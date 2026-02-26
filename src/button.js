@@ -95,7 +95,8 @@ class AsyncButton extends HTMLButtonElement {
 		}
 		// Registers invalid types for native errors
 		else {
-			super.addEventListener(type, listener, options);
+			// @ts-ignore
+			super.addEventListener(...arguments);
 		}
 	}
 
