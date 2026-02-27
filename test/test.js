@@ -85,6 +85,13 @@ test("fetch pages assert all requested", async () => {
 	}
 });
 
+// Asserts iterator data is identical to configuration used to create it
+test("load and parse default nvs partition", async () => {
+	const nvs = new NVS(await loader_fetch());
+	await nvs.all();
+	nvs_config_assert_nvs(nvs_config_default, nvs);
+});
+
 // Asserts that specifying a non default NVS partition parses correct partition
 test("load and parse non default nvs partition", async () => {
 	const nvs = new NVS(await loader_fetch("nvs2"));
@@ -102,13 +109,6 @@ test("missing nvs partition", async () => {
 });
 
 
-
-// Asserts iterator data is identical to configuration used to create it
-test("load and parse default nvs partition", async () => {
-	const nvs = new NVS(await loader_fetch());
-	await nvs.all();
-	nvs_config_assert_nvs(nvs_config_default, nvs);
-});
 
 // Searching for specified value
 test("search for value", async () => {
@@ -150,34 +150,6 @@ test("out of order blob", async () => {
 test("full value between blob chunks in search", async () => {
 	for await (const nvs of pages_reorder("reorder")) {
 		assert(ArrayBuffer.isView(await nvs.get("foo", "big")));
-	}
-});
-
-// Asserts that clearing out some of the pages will result in an incomplete blob when iterating
-test("incomplete blob in iterator", async () => {
-	let index = 0;
-	while (true) {
-		// Gets loader map and NVS page to clear
-		const loader_map = await loader_map_fetch("reorder");
-		assert(index < loader_map.size);
-		const page = Array.from(loader_map.values())[index++];
-		if (page.is_table) continue;
-
-		// Blanks out NVS page and parses everything
-		page.data.fill(0xff);
-		const nvs = new NVS(loader_from_map(loader_map));
-		const found = await nvs.fetchPartition("reorder");
-		assert(found);
-		await nvs.all();
-
-		// Test successful when iterating over nvs throws because of incomplete blob
-		const iterator = nvs[Symbol.iterator]();
-		try {
-			while (!iterator.next().done);
-		}
-		catch {
-			break;
-		}
 	}
 });
 
@@ -278,6 +250,34 @@ test("invalid entry type", async () => {
 	const nvs = new NVS(loader_from_map(loader_map));
 	nvs.setPartition(addr, data.byteLength);
 	await assert.isRejected(nvs.all());
+});
+
+// Asserts that clearing out some of the pages will result in an incomplete blob when iterating
+test("incomplete blob in iterator", async () => {
+	let index = 0;
+	while (true) {
+		// Gets loader map and NVS page to clear
+		const loader_map = await loader_map_fetch("reorder");
+		assert(index < loader_map.size);
+		const page = Array.from(loader_map.values())[index++];
+		if (page.is_table) continue;
+
+		// Blanks out NVS page and parses everything
+		page.data.fill(0xff);
+		const nvs = new NVS(loader_from_map(loader_map));
+		const found = await nvs.fetchPartition("reorder");
+		assert(found);
+		await nvs.all();
+
+		// Test successful when iterating over nvs throws because of incomplete blob
+		const iterator = nvs[Symbol.iterator]();
+		try {
+			while (!iterator.next().done);
+		}
+		catch {
+			break;
+		}
+	}
 });
 
 
