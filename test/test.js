@@ -1,6 +1,7 @@
 // @ts-check
 
 import { NVS } from "../src/index.js";
+import { nvs_pages_next, nvs_entry_next, nvs_iterate_ns, nvs_entry_type } from "../src/nvs_parser.js";
 import { ESPLoader } from "../src/esptool.js";
 
 import { assert } from "./assert.js";
@@ -251,15 +252,16 @@ test("blob index collide with string", async () => {
 
 // Asserts invalid entry state is rejected
 test("invalid entry state", async () => {
-	// Set only invalid entry state
+	// Set invalid entry state
 	const addr_bitmap_offset = 32;
-	const data = await loader_map_get_data("nvs");
+	const data = await loader_map_get_data();
 	data[addr_bitmap_offset] = 0x01;
 
 	// Asserts parsing buffer with invalid entry state is rejected
-	const loader_map = loader_map_from(await loader_map_get_addr("nvs"), data);
-	const loader = loader_from_map(loader_map);
-	const nvs = new NVS(loader);
+	const addr = await loader_map_get_addr();
+	const loader_map = loader_map_from(addr, data);
+	const nvs = new NVS(loader_from_map(loader_map));
+	nvs.setPartition(addr, data.byteLength);
 	await assert.isRejected(nvs.all());
 });
 
@@ -267,13 +269,14 @@ test("invalid entry state", async () => {
 test("invalid entry type", async () => {
 	// Clears all entry data while keeping entry states to parse invalid data
 	const addr_entry_offset = 64;
-	const data = await loader_map_get_data("nvs");
+	const data = await loader_map_get_data();
 	data.fill(0xff, addr_entry_offset);
 
 	// Asserts that parsing invalid data rejects
-	const loader_map = loader_map_from(await loader_map_get_addr("nvs"), data);
-	const loader = loader_from_map(loader_map);
-	const nvs = new NVS(loader);
+	const addr = await loader_map_get_addr();
+	const loader_map = loader_map_from(addr, data);
+	const nvs = new NVS(loader_from_map(loader_map));
+	nvs.setPartition(addr, data.byteLength);
 	await assert.isRejected(nvs.all());
 });
 
