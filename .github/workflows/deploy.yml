@@ -27,7 +27,7 @@ jobs:
               with:
                 source_dir: ./src
                 output_dir: ./_site/docs
-                tsconfig: ./lint/tsconfig_src.json
+                tsconfig: ./lint/tsconfig_browser.json
 
             - run: cp -r ./examples ./_site/examples
             - run: cp -r ./src ./_site/src
