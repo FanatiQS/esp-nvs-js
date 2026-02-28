@@ -10,20 +10,31 @@ export class NVS {
 	 */
 	constructor(loader) {
 		if (loader instanceof SerialPort) {
+			/** @private */
 			this.loader = new ESPLoader(/** @type {import("esptool-js").LoaderOptions} */({ port: loader }));
 		}
 		else if (loader) {
+			/** @private */
 			this.loader = loader;
 		}
 		else {
 			throw new Error("No serial port or loader");
 		}
 
-		/** @type {number[]} */
+		/**
+		 * @type {number[]}
+		 * @private
+		 */
 		this.addr_list = [];
-		/** @type {import("./nvs_parser.js").nvs_page|null} */
+		/**
+		 * @type {import("./nvs_parser.js").nvs_page|null}
+		 * @private
+		 */
 		this.page = null;
-		/** @type {import("./nvs_parser.js").nvs_cache} */
+		/**
+		 * @type {import("./nvs_parser.js").nvs_cache}
+		 * @private
+		 */
 		this.cache = [ new Map() ];
 	}
 
