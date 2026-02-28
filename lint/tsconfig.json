@@ -1,7 +1,7 @@
 // This file is exclusively for typescript server to pick up both configs and not for running
 {
 	"references": [
-		{ "path": "tsconfig_src.json" },
-		{ "path": "tsconfig_test.json" }
+		{ "path": "tsconfig_browser.json" },
+		{ "path": "tsconfig_test_node.json" }
 	]
 }
