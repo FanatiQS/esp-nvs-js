@@ -1,5 +1,5 @@
 {
-	"extends": "./tsconfig_src.json",
+	"extends": "./tsconfig_browser.json",
 	"compilerOptions": {
 		"target": "esnext",
 		"module": "esnext"
