@@ -53,8 +53,8 @@ async function* pages_reorder(partition_name) {
 // Assert that all pages in manually specified NVS partition are requested
 test("set pages assert all requested", async () => {
 	// Creates loader map without partition table
-	const addr = await loader_map_get_addr("nvs");
-	const data = await loader_map_get_data("nvs");
+	const addr = await loader_map_get_addr();
+	const data = await loader_map_get_data();
 	const loader_map = loader_map_from(addr, data);
 
 	// Reads manually specified partition
@@ -102,10 +102,27 @@ test("load and parse non default nvs partition", async () => {
 });
 
 // Searches for NVS partition by name without success
-test("missing nvs partition", async () => {
+test("missing non default nvs partition", async () => {
 	const nvs = new NVS(await loader_fetch());
 	const found = await nvs.fetchPartition("no-exist");
 	assert(found === false);
+});
+
+// Asserts that empty default NVS partition is completely searched for entries
+test("empty default nvs partition", async () => {
+	// Clears out all NVS partition pages
+	const loader_map = await loader_map_fetch();
+	for (const entry of loader_map.values()) {
+		if (entry.is_table) continue;
+		entry.data.fill(0xff);
+	}
+
+	// Asserts every page was searched but no data was found
+	const nvs = new NVS(loader_from_map(loader_map));
+	assert(await nvs.next() === null);
+	for (const entry of loader_map.values()) {
+		assert(entry.read);
+	}
 });
 
 
@@ -115,6 +132,15 @@ test("search for value", async () => {
 	const nvs = new NVS(await loader_fetch());
 	const value = await nvs.get("extra", "duplicate");
 	assert(value === 1);
+});
+
+// Asserts all entries can be requested
+test("request all by keys", async () => {
+	const nvs = new NVS(await loader_fetch());
+	await nvs.all();
+	for (const [ namespace, key, value ] of nvs) {
+		assert(await nvs.get(namespace, key) === value);
+	}
 });
 
 // Searching for non existent namespace
@@ -136,6 +162,23 @@ test("empty namespace", async () => {
 	const nvs = new NVS(await loader_fetch());
 	const value = await nvs.get("empty", "foo");
 	assert(value === null);
+});
+
+// Asserts erased data is skipped
+test("erased entries", async () => {
+	// Fakes all entries being deleted
+	const loader_map = await loader_map_fetch();
+	for (const entry of loader_map.values()) {
+		if (entry.is_table) continue;
+		for (let i = 32; i < 64; i++) {
+			entry.data[i] &= entry.data[i] << 1 | 0b01010101;
+		}
+	}
+
+	// Asserts no entries are found after being marked as erased
+	const nvs = new NVS(loader_from_map(loader_map));
+	await nvs.all();
+	assert(Array.from(nvs).length === 0);
 });
 
 // Ensures blob data received in different orders is still handled correctly
@@ -252,6 +295,21 @@ test("invalid entry type", async () => {
 	await assert.isRejected(nvs.all());
 });
 
+// Asserts that invalid namespace data type rejects
+test("namespace invalid type", async () => {
+	const addr_entry_offset = 64;
+	const data = await loader_map_get_data();
+	data[addr_entry_offset + 1] = nvs_entry_type.string;
+
+	const addr = await loader_map_get_addr();
+	const loader_map = loader_map_from(addr, data);
+	const nvs = new NVS(loader_from_map(loader_map));
+	nvs.setPartition(addr, data.byteLength);
+	await assert.isRejected(nvs.all());
+});
+
+
+
 // Asserts that clearing out some of the pages will result in an incomplete blob when iterating
 test("incomplete blob in iterator", async () => {
 	let index = 0;
@@ -278,6 +336,30 @@ test("incomplete blob in iterator", async () => {
 			break;
 		}
 	}
+});
+
+// Asserts that namespace iterator throws if it encounters a namespace with invalid data type
+test("invalid namespace data type in cache", async () => {
+	// Gets NVS page to fill cache from
+	const addr = await loader_map_get_addr();
+	const loader_map = loader_map_from(addr, await loader_map_get_data());
+	const loader = loader_from_map(loader_map);
+	await loader.connect();
+	await loader.runStub();
+	const page = await nvs_pages_next(loader, [ addr ]);
+	assert(page);
+
+	// Sets first namespace entry to have incorrect data type
+	/** @type {import("../src/nvs_parser.js").nvs_cache} */
+	const cache = [];
+	const entry = nvs_entry_next(page, cache);
+	assert(entry);
+	assert(entry.value === 1);
+	assert(cache[0].values().next().value === entry);
+	entry.value = "invalid type for namespace";
+
+	// Iterator should throw if it finds invalid data type for namespace
+	assert.throws(() => nvs_iterate_ns(cache).next());
 });
 
 
