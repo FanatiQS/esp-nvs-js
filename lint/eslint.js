@@ -56,7 +56,8 @@ export default defineConfig([
 		},
 		rules: {
 			...rules_base,
-			"prefer-destructuring": "off"
+			"prefer-destructuring": "off",
+			"prefer-rest-params": "off"
 		}
 	},
 	{
