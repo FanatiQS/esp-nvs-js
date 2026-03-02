@@ -171,7 +171,7 @@
 			test("invalid callback argument undefined", async () => {
 				const cbm = new CallbackManager();
 				assert.throws(() => {
-					// @ts-ignore
+					// @ts-expect-error
 					cbm.btn.addEventListener("click");
 				});
 			});
@@ -179,14 +179,14 @@
 			test("invalid callback argument number", async () => {
 				const cbm = new CallbackManager();
 				assert.throws(() => {
-					// @ts-ignore
+					// @ts-expect-error
 					cbm.btn.addEventListener("click", 1337);
 				});
 			});
 
 			test("callback argument empty object", async () => {
 				const cbm = new CallbackManager();
-				// @ts-ignore
+				// @ts-expect-error
 				cbm.btn.addEventListener("click", {});
 				cbm.btn.click();
 			});
