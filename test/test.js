@@ -9,6 +9,13 @@ import { loader_from_map, loader_map_get_addr, loader_map_get_data, loader_map_f
 import { nvs_config_default, nvs_config2, nvs_config_reorder, nvs_config_assert, nvs_config_assert_nvs } from "./nvs_config.js";
 import { serialport_stub } from "./stub_serialport.js";
 
+// NVS format offsets and sizes
+const ADDR_SIZE_HEADER = 32;
+const ADDR_SIZE_BITMAP = 32;
+const ADDR_OFFSET_HEADER = 0;
+const ADDR_OFFSET_BITMAP = ADDR_OFFSET_HEADER + ADDR_SIZE_HEADER;
+const ADDR_OFFSET_ENTRY = ADDR_OFFSET_BITMAP + ADDR_SIZE_BITMAP;
+
 // Prevents ESPLoader from printing to the console
 ESPLoader.prototype.write = () => {};
 
@@ -268,9 +275,8 @@ test("blob index collide with string", async () => {
 // Asserts invalid entry state is rejected
 test("invalid entry state", async () => {
 	// Set invalid entry state
-	const addr_bitmap_offset = 32;
 	const data = await loader_map_get_data();
-	data[addr_bitmap_offset] = 0x01;
+	data[ADDR_OFFSET_BITMAP] = 0x01;
 
 	// Asserts parsing buffer with invalid entry state is rejected
 	const addr = await loader_map_get_addr();
@@ -282,12 +288,11 @@ test("invalid entry state", async () => {
 
 // Asserts invalid entry type is rejected
 test("invalid entry type", async () => {
-	// Clears all entry data while keeping entry states to parse invalid data
-	const addr_entry_offset = 64;
+	// Clears all entry data while keeping entry states to parse invalid data type
 	const data = await loader_map_get_data();
-	data.fill(0xff, addr_entry_offset);
+	data.fill(0xff, ADDR_OFFSET_ENTRY);
 
-	// Asserts that parsing invalid data rejects
+	// Asserts that parsing page with invalid data type rejects
 	const addr = await loader_map_get_addr();
 	const loader_map = loader_map_from(addr, data);
 	const nvs = new NVS(loader_from_map(loader_map));
@@ -297,9 +302,8 @@ test("invalid entry type", async () => {
 
 // Asserts that invalid namespace data type rejects
 test("namespace invalid type", async () => {
-	const addr_entry_offset = 64;
 	const data = await loader_map_get_data();
-	data[addr_entry_offset + 1] = nvs_entry_type.string;
+	data[ADDR_OFFSET_ENTRY + 1] = nvs_entry_type.string;
 
 	const addr = await loader_map_get_addr();
 	const loader_map = loader_map_from(addr, data);
