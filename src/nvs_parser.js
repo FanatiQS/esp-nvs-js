@@ -21,9 +21,6 @@
  * @typedef nvs_entry
  * @property {nvs_value|null} value
  * @property {nvs_chunks|null} chunks
- * @property {DataView} page_view
- * @property {number} page_addr
- * @property {number} bitmap_index
  *
  * @typedef {Map<string,nvs_entry>[]} nvs_cache
  *
@@ -311,13 +308,10 @@ function nvs_entry_parse(page, cache) {
 	if (entries.has(key)) {
 		throw new Error(`Found multiple entries for: 0x${ns.toString(16).padStart(2, "0")} "${key}"`);
 	}
-	const entry = {
+	const entry = /** @type {nvs_entry} */({
 		value: value,
-		chunks: chunks,
-		page_view: page.view,
-		page_addr: page.addr,
-		bitmap_index: bitmap_index
-	};
+		chunks: chunks
+	});
 	entries.set(key, entry);
 
 	// Returns entry unless an incomplete blob
