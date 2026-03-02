@@ -35,19 +35,31 @@ const partitions_config = [
 	{ name: "nvs", type: "data", subtype: "nvs", size: 0x6000, data: nvs_config_default },
 	{ name: "factory", type: "app", subtype: "factory", size: 0x10000 },
 	{ name: "nvs2", type: "data", subtype: "nvs", size: 0x4000, data: nvs_config2 },
-	{ name: "duplicate-keys", type: "data", subtype: "nvs", size: 0x3000, data: {
-		"foo": [
-			{ key: "bar", type: "u8", value: 1 },
-			{ key: "bar", type: "i16", value: 2 }
-		]
-	}},
-	{ name: "blob-data-on-str", type: "data", subtype: "nvs", size: 0x5000, data: {
-		"foo": [
-			{ key: "baz", value: "0".repeat(nvs_config_page_space_usable - 1 - 32) }, // string filling to end of page
-			{ key: "bar", value: 1, type: "u8" }, // dummy data since string can for some reason not fill page by itself
-			{ key: "baz", value: new Uint8Array(nvs_config_page_space_usable).map((value, index) => index) } // blob with data and index in separate pages
-		]
-	}},
+	{
+		name: "duplicate-keys",
+		type: "data",
+		subtype: "nvs",
+		size: 0x3000,
+		data: {
+			foo: [
+				{ key: "bar", type: "u8", value: 1 },
+				{ key: "bar", type: "i16", value: 2 }
+			]
+		}
+	},
+	{
+		name: "blob-data-on-str",
+		type: "data",
+		subtype: "nvs",
+		size: 0x5000,
+		data: {
+			foo: [
+				{ key: "baz", value: "0".repeat(nvs_config_page_space_usable - 1 - 32) }, // string filling to end of page
+				{ key: "bar", value: 1, type: "u8" }, // dummy data since string can for some reason not fill page by itself
+				{ key: "baz", value: new Uint8Array(nvs_config_page_space_usable).map((value, index) => index) } // blob with data and index in separate pages
+			]
+		}
+	},
 	{ name: "reorder", type: "data", subtype: "nvs", size: 0x5000, data: nvs_config_reorder }
 ];
 
