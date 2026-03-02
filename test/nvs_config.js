@@ -102,7 +102,7 @@ export function nvs_config_assert(nvs_config, nvs_cmp) {
 export function nvs_config_assert_nvs(nvs_config, nvs) {
 	/** @type {test_nvs_compare} */
 	const nvs_parsed_cmp = {};
-	for (const [ namespace, key, value] of nvs) {
+	for (const [ namespace, key, value ] of nvs) {
 		const entries = nvs_parsed_cmp[namespace] ||= {};
 		entries[key] = value;
 	}

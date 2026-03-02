@@ -225,7 +225,7 @@ test("no double fetch partition", async () => {
 // Asserts empty partition table can fetch without reject and fails on .next
 test("empty partition table", async () => {
 	const partition_table_data = await loader_map_get_data("partition_table");
-	const loader_map = new Map([[ 0x8000, { is_table: true, read: false, data: partition_table_data.fill(0xff) } ]]);
+	const loader_map = new Map([ [ 0x8000, { is_table: true, read: false, data: partition_table_data.fill(0xff) } ] ]);
 	const nvs = new NVS(loader_from_map(loader_map));
 	assert(!await nvs.fetchPartition());
 	await assert.isRejected(nvs.all());
@@ -234,7 +234,7 @@ test("empty partition table", async () => {
 // Asserts zeroed out partition table can fetch without reject and fails on .next
 test("zeroed partition table", async () => {
 	const partition_table_data = await loader_map_get_data("partition_table");
-	const loader_map = new Map([[ 0x8000, { is_table: true, read: false, data: partition_table_data.fill(0x00) } ]]);
+	const loader_map = new Map([ [ 0x8000, { is_table: true, read: false, data: partition_table_data.fill(0x00) } ] ]);
 	const nvs = new NVS(loader_from_map(loader_map));
 	assert(!await nvs.fetchPartition());
 	await assert.isRejected(nvs.all());
@@ -386,7 +386,7 @@ test("parsed JSON", async () => {
 	for (const [ namespace, object ] of Object.entries(nvs.toJSON())) {
 		const entries = Object.entries(object);
 		if (!entries.length) continue;
-		cmp_json[namespace] = Object.fromEntries(entries.map(([ key, value]) => {
+		cmp_json[namespace] = Object.fromEntries(entries.map(([ key, value ]) => {
 			// Converts JSON numbers array back to Uint8Array
 			if (Array.isArray(value)) {
 				return [ key, new Uint8Array(value) ];

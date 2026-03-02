@@ -50,7 +50,7 @@ class AsyncButton extends HTMLButtonElement {
 	 * @param {Event} event
 	 * @param {EventListenerObject|this} self
 	 */
-	async dispatch(listener, event, self=this) {
+	async dispatch(listener, event, self = this) {
 		if (!this.working) {
 			this.setAttribute("aria-working", "true");
 		}
@@ -113,5 +113,5 @@ class AsyncButton extends HTMLButtonElement {
 
 // Registers async button as custom element
 customElements.define("async-button", AsyncButton, {
-	extends: "button",
+	extends: "button"
 });

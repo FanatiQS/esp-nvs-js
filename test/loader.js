@@ -67,7 +67,7 @@ export function loader_from_map(loader_map) {
  * Gets flash address of specified partition
  * @param {string} partition_name
  */
-export async function loader_map_get_addr(partition_name="nvs") {
+export async function loader_map_get_addr(partition_name = "nvs") {
 	const response = await fetch(`/api/addr/${partition_name}`);
 	assert(response.status === 200);
 	const addr = await response.json();
@@ -79,7 +79,7 @@ export async function loader_map_get_addr(partition_name="nvs") {
  * Get data buffer from specified file
  * @param {string} [name]
  */
-export async function loader_map_get_data(name="nvs") {
+export async function loader_map_get_data(name = "nvs") {
 	const response = await fetch(`/api/data/${name}`);
 	assert(response.status === 200);
 
@@ -120,7 +120,7 @@ export function loader_map_from(addr, data) {
  * Creates a loader map from generated NVS partition data
  * @param {string} [partition_name]
  */
-export async function loader_map_fetch(partition_name="nvs") {
+export async function loader_map_fetch(partition_name = "nvs") {
 	const addr = await loader_map_get_addr(partition_name);
 	const data = await loader_map_get_data(partition_name);
 	const loader_map = loader_map_from(addr, data);

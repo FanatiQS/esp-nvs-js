@@ -442,7 +442,7 @@ export function* nvs_iterate_ns(cache) {
  * @param {nvs_cache} cache Cache storing parsed NVS entries
  * @param {number} ns Namespace index
  * @returns {Generator<[string,nvs_value],void,void>}
-*/
+ */
 export function* nvs_iterate_value(cache, ns) {
 	if (ns in cache) {
 		for (const [ key, entry ] of cache[ns]) {

@@ -62,7 +62,7 @@ function parse_int(input) {
 			return Number(input.slice(0, -1)) * 1024;
 		}
 		case "M":
-		case 'm': {
+		case "m": {
 			return Number(input.slice(0, -1)) * 1024 * 1024;
 		}
 		default: {
@@ -75,7 +75,7 @@ function parse_int(input) {
  * Generates partition table and partitions binaries from configuration
  * @param {string} [work_dir]
  */
-export async function partitions_generate(work_dir=default_dir) {
+export async function partitions_generate(work_dir = default_dir) {
 	// Creates partition table CSV file
 	await mkdir(work_dir, { recursive: true });
 	const partition_table_csv_path = `${work_dir}/partition_table.csv`;
@@ -120,8 +120,8 @@ export async function partitions_generate(work_dir=default_dir) {
 
 		// Generates NVS binary from CSV file
 		const nvs_bin_path = `${work_dir}/${name}.bin`;
-		const nvs_script_path = `python -m esp_idf_nvs_partition_gen`;
-		await python(`${nvs_script_path} generate ${nvs_csv_path} ${nvs_bin_path} ${size}`);	
+		const nvs_script_path = "python -m esp_idf_nvs_partition_gen";
+		await python(`${nvs_script_path} generate ${nvs_csv_path} ${nvs_bin_path} ${size}`);
 	}
 
 	// Ensures partition table CSV file is completely written before using it
@@ -139,7 +139,7 @@ export async function partitions_generate(work_dir=default_dir) {
  * Caches generated NVS partitions
  * @param {string} [work_dir]
  */
-export async function partitions_cache(work_dir=default_dir) {
+export async function partitions_cache(work_dir = default_dir) {
 	// Reads partition table binary file first for better error if files have not been generated
 	const partition_table_bin_path = `${work_dir}/partition_table.bin`;
 	const partition_table_bin_data = await readFile(partition_table_bin_path);
@@ -149,7 +149,7 @@ export async function partitions_cache(work_dir=default_dir) {
 	const { stdout: partition_table_csv_data } = await python(partition_table_csv_script);
 
 	// Creates partitions list with partition table region
-	const partitions = new Map([[ "partition_table", { addr: 0x8000, data: new Uint8Array(partition_table_bin_data) }]]);
+	const partitions = new Map([ [ "partition_table", { addr: 0x8000, data: new Uint8Array(partition_table_bin_data) } ] ]);
 
 	// Registers NVS partitions in partitions list
 	for (const [ name, type, subtype, addr, size ] of csv_parse(partition_table_csv_data, { comment: "#" })) {
