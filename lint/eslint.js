@@ -1,8 +1,9 @@
 import js from "@eslint/js";
+import stylistic from "@stylistic/eslint-plugin";
 import globals from "globals";
 import { defineConfig } from "eslint/config";
 
-// cspell: ignore camelcase no-plusplus
+// cspell: ignore camelcase no-plusplus stroustrup linebreak
 
 // Test server files that run in node
 const files_server_test = [
@@ -17,6 +18,7 @@ export default defineConfig([
 	{
 		name: "default",
 		files: [ "src/**/*.js", "test/**/*.js" ],
+		plugins: { "@stylistic": stylistic },
 		rules: {
 			...js.configs.all.rules,
 			"one-var": [ "error", "never" ],
@@ -45,7 +47,26 @@ export default defineConfig([
 			"no-magic-numbers": "off",
 			"sort-keys": "off",
 			"sort-imports": "off",
-			"no-undefined": "off"
+			"no-undefined": "off",
+
+			...stylistic.configs.all.rules,
+			"@stylistic/space-before-function-paren": [ "error", { named: "never" } ],
+			"@stylistic/object-property-newline": [ "error", { allowAllPropertiesOnSameLine: true }],
+			"@stylistic/lines-around-comment": [ "error", { allowBlockStart: true, ignorePattern: "\\*" }],
+			"@stylistic/array-element-newline": [ "error", "consistent" ],
+			"@stylistic/indent": [ "error", "tab" ],
+			"@stylistic/padded-blocks": [ "error", "never" ],
+			"@stylistic/object-curly-spacing": [ "error", "always" ],
+			"@stylistic/array-bracket-spacing": [ "error", "always" ],
+			"@stylistic/function-call-argument-newline": [ "error", "consistent" ],
+			"@stylistic/quote-props": [ "error", "as-needed" ],
+			"@stylistic/brace-style": [ "error", "stroustrup" ],
+			"@stylistic/multiline-ternary": [ "error", "never" ],
+			"@stylistic/no-multiple-empty-lines": "off",
+			"@stylistic/operator-linebreak": [ "error", "before"],
+			"@stylistic/array-bracket-newline": [ "error", "consistent" ],
+			"@stylistic/generator-star-spacing": [ "error", "after" ],
+			"@stylistic/no-extra-parens": "off"
 		}
 	},
 	{
