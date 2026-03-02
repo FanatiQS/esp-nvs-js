@@ -402,7 +402,7 @@ export async function nvs_pages_lookup(loader, addr_list, name = "nvs", addr = 0
 export async function nvs_pages_next(loader, addr_list) {
 	/** @type {number|undefined} */
 	let addr;
-	while ((addr = addr_list.shift())) {
+	while ((addr = addr_list.shift()) != null) {
 		// Reads next NVS page from device
 		const data = await loader.readFlash(addr, PAGE_SIZE);
 		const view = new DataView(data.buffer);
