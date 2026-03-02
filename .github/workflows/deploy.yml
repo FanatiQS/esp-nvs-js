@@ -37,6 +37,8 @@ jobs:
               if: ${{ !cancelled() }}
             - run: npx lcov-badge2 coverage/lcov.info -l Coverage -o ./_site/coverage.svg
               if: ${{ !cancelled() }}
+            - run: npm run lint
+              if: ${{ !cancelled() }}
 
             - uses: actions/upload-pages-artifact@v4
               if: ${{ !cancelled() }}

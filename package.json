@@ -23,6 +23,6 @@
 		"lint:ts": "npx tsc -p lint/tsconfig_browser.json && npx tsc -p lint/tsconfig_test_node.json",
 		"lint:eslint": "npx eslint --config lint/eslint.js",
 		"lint": "npm run lint:ts && npm run lint:eslint",
-		"test": "npm run lint && node ./test/index.js"
+		"test": "node ./test/index.js"
 	}
 }
