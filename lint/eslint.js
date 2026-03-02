@@ -80,7 +80,7 @@ export default defineConfig([
 		}
 	},
 	{
-		name: "src exceptions",
+		name: "browser-src",
 		files: [ "src/**/*.js" ],
 		rules: {
 			"prefer-destructuring": "off",
@@ -88,7 +88,7 @@ export default defineConfig([
 		}
 	},
 	{
-		name: "test exceptions",
+		name: "browser-test",
 		files: [ "test/**/*.js" ],
 		ignores: files_server_test,
 		languageOptions: {
@@ -105,7 +105,7 @@ export default defineConfig([
 		}
 	},
 	{
-		name: "test server",
+		name: "server-test",
 		files: files_server_test,
 		languageOptions: {
 			globals: {
