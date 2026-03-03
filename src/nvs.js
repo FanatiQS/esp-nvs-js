@@ -191,16 +191,18 @@ export class NVS {
 
 
 	/**
-	 * Gets all cached data as JSON
+	 * Gets all data as JSON
 	 */
-	toJSON() {
+	async toJSON() {
+		await this.all();
 		return nvs_transform_json(this.cache);
 	}
 
 	/**
-	 * Gets all cached data as HTML table
+	 * Gets all data as HTML table
 	 */
-	toHTML() {
+	async toHTML() {
+		await this.all();
 		return nvs_transform_html(this.cache);
 	}
 }

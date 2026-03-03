@@ -76,8 +76,7 @@ Look at `examples/json.html` ([demo](https://fanatiqs.github.io/esp-nvs-js/examp
 
 ```js
 const nvs = new NVS(await navigator.serial.requestPort());
-await nvs.all();
-console.log(nvs.toJSON());
+console.log(await nvs.toJSON());
 ```
 
 ### Example 3
@@ -87,8 +86,7 @@ Look at `examples/table.html` ([demo](https://fanatiqs.github.io/esp-nvs-js/exam
 
 ```js
 const nvs = new NVS(await navigator.serial.requestPort());
-await nvs.all();
-document.body.appendChild(nvs.toHTML());
+document.body.appendChild(await nvs.toHTML());
 ```
 
 ### Example 4

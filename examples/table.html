@@ -22,8 +22,7 @@
 
 		document.getElementById("read").addEventListener("click", async () => {
 			const nvs = new NVS(await navigator.serial.requestPort());
-			await nvs.all();
-			document.body.appendChild(nvs.toHTML());
+			document.body.appendChild(await nvs.toHTML());
 		});
 	</script>
 </body>

@@ -16,8 +16,7 @@
 
 		document.getElementById("read").addEventListener("click", async () => {
 			const nvs = new NVS(await navigator.serial.requestPort());
-			await nvs.all();
-			console.log(nvs.toJSON());
+			console.log(await nvs.toJSON());
 			document.getElementById("available").hidden = false;
 		});
 	</script>

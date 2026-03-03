@@ -376,18 +376,17 @@ test("JSON not support BigInt", () => {
 // Asserts that output from .toJSON can be serialized
 test("JSON serializable", async () => {
 	const nvs = new NVS(await loader_fetch());
-	await nvs.all();
-	JSON.stringify(nvs.toJSON());
+	const str = JSON.stringify(await nvs.toJSON());
+	assert.hasAllKeys(JSON.parse(str), Object.keys(nvs_config_default));
 });
 
 // Asserts JSON data is identical to configuration used to create it
 test("parsed JSON", async () => {
 	const nvs = new NVS(await loader_fetch());
-	await nvs.all();
 
 	/** @type {import("./nvs_config.js").test_nvs_compare} */
 	const cmp_json = {};
-	for (const [ namespace, object ] of Object.entries(nvs.toJSON())) {
+	for (const [ namespace, object ] of Object.entries(await nvs.toJSON())) {
 		const entries = Object.entries(object);
 		if (!entries.length) continue;
 		cmp_json[namespace] = Object.fromEntries(entries.map(([ key, value ]) => {
@@ -412,8 +411,7 @@ test("parsed JSON", async () => {
 // Asserts that .toHTML function and underlying transformer generates table without exceptions
 test("HTML generation", async () => {
 	const nvs = new NVS(await loader_fetch());
-	await nvs.all();
-	assert(nvs.toHTML() instanceof HTMLElement);
+	assert(await nvs.toHTML() instanceof HTMLElement);
 });
 
 
