@@ -1,6 +1,6 @@
 // @ts-check
 
-import { startTestRunner } from "@web/test-runner";
+import { startTestRunner, defaultReporter, summaryReporter } from "@web/test-runner";
 import { partitions_generate, partitions_cache } from "./partitions.js";
 
 // Generates partition files and gets cache
@@ -16,6 +16,10 @@ await startTestRunner({
 		],
 		nodeResolve: true,
 		coverage: true,
+		reporters: [
+			defaultReporter({ reportTestProgress: true }),
+			summaryReporter({})
+		],
 		testFramework: {
 			config: { ui: "tdd" }
 		},
