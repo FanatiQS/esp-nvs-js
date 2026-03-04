@@ -141,6 +141,16 @@ test("search for value", async () => {
 	assert(value === 1);
 });
 
+// Asserts that searching stops parsing when finding and does not scan every page
+test("search not scan all pages", async () => {
+	const loader_map = await loader_map_fetch();
+	const nvs = new NVS(loader_from_map(loader_map));
+	await nvs.get("uint_max", "u8-max");
+
+	assert(Array.from(loader_map.values()).filter(({ is_table, read }) => !is_table && read).length === 1);
+	assert(loader_map.get(0x8000)?.is_table);
+});
+
 // Asserts all entries can be requested
 test("request all by keys", async () => {
 	const nvs = new NVS(await loader_fetch());
@@ -298,6 +308,26 @@ test("invalid entry type", async () => {
 	const nvs = new NVS(loader_from_map(loader_map));
 	nvs.setPartition(addr, data.byteLength);
 	await assert.isRejected(nvs.all());
+});
+
+// Asserts invalid span length skips remaining page since we don't know how many many entries it was supposed to span
+test("invalid span length", async () => {
+	// Clears all entries data in first page while keeping entry states to parse invalid data type
+	const data = await loader_map_get_data();
+	const addr = await loader_map_get_addr();
+	const loader_map = loader_map_from(addr, data);
+	const page = loader_map.get(addr);
+	assert(page);
+	page.data.fill(0xff, ADDR_OFFSET_ENTRY);
+
+	// Asserts that parsing data with invalid span length rejects and skips remainder of page
+	const nvs = new NVS(loader_from_map(loader_map));
+	nvs.setPartition(addr, data.byteLength);
+	assert([ ...loader_map.values() ].filter((entry) => entry.read).length === 0);
+	await assert.isRejected(nvs.next());
+	assert([ ...loader_map.values() ].filter((entry) => entry.read).length === 1);
+	await nvs.next();
+	assert([ ...loader_map.values() ].filter((entry) => entry.read).length === 2);
 });
 
 // Asserts that invalid namespace data type rejects
