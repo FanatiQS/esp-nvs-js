@@ -7,7 +7,7 @@ A JavaScript browser library for reading ESP32 Non-Volatile Storage (NVS) entrie
 
 ## Highlights
 
-* Reads specified NVS partitions or auto-detects them using device's partition table
+* Reads specified NVS partition or auto-detects using device's partition table
 * Supports all NVS types (integers, strings, blobs)
 * Communicates directly with the ESP32 over USB using WebSerial
 * Efficiently reads just enough data to find what you are looking for
