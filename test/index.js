@@ -1,5 +1,7 @@
 // @ts-check
 
+// Use with `--manual` to allow opening in a browser manually for easier debugging
+
 import { startTestRunner, defaultReporter, summaryReporter } from "@web/test-runner";
 import { partitions_generate, partitions_cache } from "./partitions.js";
 
