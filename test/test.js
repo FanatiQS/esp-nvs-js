@@ -1,6 +1,7 @@
 // @ts-check
 
-import { NVS } from "../src/index.js";
+import { NVS } from "../src/nvs.js";
+import * as module from "../src/index.js";
 import { nvs_pages_next, nvs_entry_next, nvs_iterate_ns, nvs_entry_type } from "../src/nvs_parser.js";
 import { ESPLoader } from "../src/esptool.js";
 
@@ -476,4 +477,34 @@ test("NVS constructor wrong or missing argument", () => {
 	assert.throws(() => new NVS());
 	// @ts-expect-error
 	new NVS({});
+});
+
+
+
+// Asserts that no change has been made to public exports
+test("api surface", async () => {
+	assert.hasAllKeys(module, [
+		"NVS",
+		"nvs_entry_type",
+		"nvs_entry_next",
+		"nvs_pages_set",
+		"nvs_pages_lookup",
+		"nvs_pages_next",
+		"nvs_iterate_ns",
+		"nvs_iterate_value",
+		"nvs_iterate",
+		"nvs_transform_html",
+		"nvs_transform_json"
+	]);
+});
+
+// Asserts that performance has not regressed too much
+test("performance", async () => {
+	const loader = await loader_fetch();
+	const mark = performance.now();
+	const nvs = new NVS(loader);
+	await nvs.all();
+	const duration = performance.now() - mark;
+	assert(duration >= 0);
+	assert.isAtMost(duration, 1);
 });
