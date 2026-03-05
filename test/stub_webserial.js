@@ -3,10 +3,12 @@
 import { serialport_stub } from "./stub_serialport.js";
 
 class SerialStub {
+	// Requests a stubbed serial port
 	async requestPort() {
 		return serialport_stub();
 	}
 
+	// Always has a single stubbed port available
 	async getPorts() {
 		return [ await this.requestPort() ];
 	}
