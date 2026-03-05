@@ -119,6 +119,7 @@ export async function partitions_generate(work_dir = default_dir) {
 				else if (typeof value === "string") {
 					type = "string";
 				}
+				assert(type);
 
 				// Writes NVS entry
 				nvs_csv.write(`${key},data,${type},${value}\n`);

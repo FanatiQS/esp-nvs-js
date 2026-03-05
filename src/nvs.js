@@ -135,17 +135,18 @@ export class NVS {
 				return null;
 			}
 		}
+		const ns = /** @type {number} */(entry.value);
 
 		// Ensures namespace exists
-		const ns = /** @type {number} */(entry.value);
-		while (!this.cache[ns]) {
+		/** @type {Map<string,import("./nvs_parser.js").nvs_entry>} */
+		let entries;
+		while (!(entries = this.cache[ns])) {
 			if (!await this.next()) {
 				return null;
 			}
 		}
 
 		// Gets entry for key from namespace
-		const entries = this.cache[ns];
 		while (!(entry = entries.get(key))) {
 			if (!await this.next()) {
 				return null;
@@ -155,7 +156,7 @@ export class NVS {
 		// Ensures entry is not an incomplete value
 		while (entry.value === null) {
 			if (!await this.next()) {
-				return null;
+				throw new Error("Blob is in an incomplete state after parsing all pages");
 			}
 		}
 

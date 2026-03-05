@@ -75,7 +75,8 @@ export const nvs_config_page_space_usable = 0x1000 - 64 - 32;
 export const nvs_config_reorder = {
 	foo: [
 		{ key: "small", value: new Uint8Array(nvs_config_page_space_usable - 32).map((value, index) => index) }, // single chunk
-		{ key: "big", value: new Uint8Array(nvs_config_page_space_usable * 2 - 32).map((value, index) => index) } // multiple chunks
+		{ key: "big", value: new Uint8Array(nvs_config_page_space_usable * 2 - 32).map((value, index) => index) }, // multiple chunks
+		{ key: "last", type: "u8", value: 1 } // trailing value to not end parsing in blob
 	]
 };
 

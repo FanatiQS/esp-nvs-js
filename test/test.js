@@ -28,7 +28,7 @@ ESPLoader.prototype.write = () => {};
  */
 async function* pages_reorder(partition_name) {
 	const loader_map = await loader_map_fetch(partition_name);
-	const nvs_pages = Array.from(loader_map.values()).filter((page) => !page.is_table);
+	const nvs_pages = Array.from(loader_map.values()).filter(({ is_table }) => !is_table);
 	assert(nvs_pages.length > 1);
 
 	// Goes through all NVS page order permutations
@@ -341,6 +341,32 @@ test("namespace invalid type", async () => {
 	const nvs = new NVS(loader_from_map(loader_map));
 	nvs.setPartition(addr, data.byteLength);
 	await assert.isRejected(nvs.all());
+});
+
+// Asserts that clearing out some of the pages will result in incomplete blob when searching
+test("incomplete blob when searching", async () => {
+	let fails = 0;
+	const loader_map = await loader_map_fetch("reorder");
+	for (const [ addr, page ] of loader_map) {
+		if (page.is_table) continue;
+
+		// Duplicates loader map with a single page being blanked out
+		const loader_map2 = new Map(loader_map);
+		loader_map2.set(addr, { ...page, data: new Uint8Array(page.data.byteLength).fill(0xff) });
+
+		const nvs = new NVS(loader_from_map(loader_map2));
+		const found = await nvs.fetchPartition("reorder");
+		assert(found);
+
+		// Asserts incomplete blob throws exception
+		try {
+			await nvs.find("foo", "big");
+		}
+		catch {
+			fails++;
+		}
+	}
+	assert(fails > 0);
 });
 
 
