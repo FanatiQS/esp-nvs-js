@@ -27,10 +27,13 @@ export class Loader {
 		// Ensures requested region exists
 		const region = this.loader_map.get(addr);
 		assert(region, `Firmware buffer does not contain requested region: 0x${addr.toString(16)}`);
-		assert(
-			region.data.byteLength === size,
-			`Firmware buffer is not of the expected size: 0x${region.data.byteLength.toString(16)}, 0x${size.toString(16)}`
-		);
+
+		// Ensures requested region is of correct size or a peek at the NVS page state
+		if (region.is_table || size !== 4) {
+			const size_hex_region = `0x${region.data.byteLength.toString(16)}`;
+			const size_hex_request = `0x${size.toString(16)}`;
+			assert(region.data.byteLength === size, `Firmware buffer is not of expected size: ${size_hex_region}, ${size_hex_request}`);
+		}
 
 		// Sets read flag to indicate this page was read
 		region.read = true;

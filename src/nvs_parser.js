@@ -397,17 +397,18 @@ export async function nvs_pages_next(loader, addr_list) {
 	/** @type {number|undefined} */
 	let addr;
 	while ((addr = addr_list.shift()) != null) {
-		// Reads next NVS page from device
-		const data = await loader.readFlash(addr, PAGE_SIZE);
-		const view = new DataView(data.buffer);
+		// Reads next NVS pages state from device
+		const state_data = await loader.readFlash(addr, 4);
+		const state_view = new DataView(state_data.buffer);
+		const state = state_view.getUint32(0, true);
 
-		// Returns page object for parsing if it could contain data
-		const state = view.getUint32(0, true);
+		// Returns page object for parsing with entire NVS page if it possibly contains data
 		if (state === nvs_page_states.active || state === nvs_page_states.full) {
+			const page_data = await loader.readFlash(addr, PAGE_SIZE);
 			return {
 				addr: addr,
 				index: 0,
-				view: view
+				view: new DataView(page_data.buffer)
 			};
 		}
 	}
