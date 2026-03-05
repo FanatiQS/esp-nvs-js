@@ -108,3 +108,19 @@ The API documentation is available [here](https://fanatiqs.github.io/esp-nvs-js/
 
 * No support for encrypted NVS partitions
 * No delete or write support
+
+## Known bugs
+The class implementation of the parser can not run overlapped.
+If multiple calls to the parser are done without awaiting result from the previous one first, it will drop entries.
+
+```js
+// This silently drops data
+const [ value1, value2 ] = await Promise.all([
+	nvs.get("foo", "bar"),
+	nvs.get("foo", "baz")
+]);
+
+// This works correctly
+const value1 = await nvs.get("foo", "bar");
+const value2 = await nvs.get("foo", "baz");
+```
