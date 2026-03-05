@@ -103,8 +103,8 @@ function nvs_buffer_null_terminate(buffer, offset, length) {
 function nvs_chunks_assemble(info, chunks) {
 	const buf = new Uint8Array(info.size);
 	let offset = 0;
-	for (let i = info.start; i < chunks.arr.length; i++) {
-		const chunk = chunks.arr[i];
+	for (let i = 0; i < chunks.len; i++) {
+		const chunk = chunks.arr[info.start + i];
 		if (!chunk) {
 			throw new Error("Missing chunk when assembling");
 		}
