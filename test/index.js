@@ -23,33 +23,30 @@ await startTestRunner({
 		testFramework: {
 			config: { ui: "tdd" }
 		},
-		plugins: [
-			{
-				name: "serve-esp-partitions",
-				serve(context) {
-					// Serves generated file as strings to bypass incorrect internal serialization in web-test-runner
-					const prefix_data = "/api/data/";
-					if (context.path.startsWith(prefix_data)) {
-						const name = context.path.slice(prefix_data.length);
-						const partition = partitions.get(name);
-						if (partition) {
-							return String.fromCharCode(...partition.data);
-						}
+		middleware: [
+			(context, next) => {
+				const prefix_data = "/api/data/";
+				if (context.path.startsWith(prefix_data)) {
+					const name = context.path.slice(prefix_data.length);
+					const partition = partitions.get(name);
+					if (partition) {
+						context.body = partition.data;
+						return;
 					}
-
-					// Serves address of requested NVS partition
-					const prefix_addr = "/api/addr/";
-					if (context.path.startsWith(prefix_addr)) {
-						const name = context.path.slice(prefix_addr.length);
-						const partition = partitions.get(name);
-						if (partition) {
-							return partition.addr.toString();
-						}
-					}
-
-					// Default handling for other paths
-					return undefined;
 				}
+
+				// Serves address of requested NVS partition
+				const prefix_addr = "/api/addr/";
+				if (context.path.startsWith(prefix_addr)) {
+					const name = context.path.slice(prefix_addr.length);
+					const partition = partitions.get(name);
+					if (partition) {
+						context.body = partition.addr.toString();
+						return;
+					}
+				}
+
+				return next();
 			}
 		]
 	}

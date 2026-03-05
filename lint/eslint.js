@@ -47,7 +47,7 @@ export default defineConfig([
 			"no-magic-numbers": "off",
 			"sort-keys": "off",
 			"sort-imports": "off",
-			"no-undefined": "off",
+			"consistent-return": "off",
 
 			...stylistic.configs.all.rules,
 			"@stylistic/space-before-function-paren": [ "error", { named: "never" } ],

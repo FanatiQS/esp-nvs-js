@@ -82,15 +82,7 @@ export async function loader_map_get_addr(partition_name = "nvs") {
 export async function loader_map_get_data(name = "nvs") {
 	const response = await fetch(`/api/data/${name}`);
 	assert(response.status === 200);
-
-	// NVS partitions data is served as a string to prevent web-test-runner from trying to serialize it incorrectly
-	const text = await response.text();
-	const data = new Uint8Array(text.length);
-	for (let i = 0; i < data.byteLength; i++) {
-		data[i] = text.charCodeAt(i);
-	}
-
-	return data;
+	return new Uint8Array(await response.arrayBuffer());
 }
 
 /**
