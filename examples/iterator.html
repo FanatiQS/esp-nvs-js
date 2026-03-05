@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Iterator example</title>
+	<link rel="stylesheet" href="../src/button.css">
+	<script src="../src/button.js"></script>
+</head>
+<body>
+	<p>Reads SoftAP configuration from device over USB</p>
+	<button id="read" is="async-button">Read</button>
+	<span class="webserial-unsupported-message">WebSerial not supported</span>
+	<pre id="available" hidden>Output available in the developer console</pre>
+	<script type="module">
+		import { NVS } from "../src/nvs.js";
+
+		document.getElementById("read").addEventListener("click", async () => {
+			const nvs = new NVS(await navigator.serial.requestPort());
+
+			// Filters out only SoftAP parameters
+			await nvs.all();
+			for (const [ namespace, key, value ] of nvs) {
+				if (namespace === "nvs.net80211" && key.startsWith("ap.")) {
+					console.log(key, value);
+				}
+			}
+
+			document.getElementById("available").hidden = false;
+		});
+	</script>
+</body>
+</html>

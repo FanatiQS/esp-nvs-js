@@ -92,6 +92,7 @@ document.body.appendChild(await nvs.toHTML());
 ### Example 4
 
 Get all values through iterator.
+Look at `examples/iterator.html` ([demo](https://fanatiqs.github.io/esp-nvs-js/examples/iterator.html)) for a complete example.
 
 ```js
 const nvs = new NVS(await navigator.serial.requestPort());
