@@ -162,16 +162,16 @@ export async function partitions_cache(work_dir = default_dir) {
 	const { stdout: partition_table_csv_data } = await python(partition_table_csv_script);
 
 	// Creates partitions list with partition table region
-	const partitions = new Map([ [ "partition_table", { addr: 0x8000, data: new Uint8Array(partition_table_bin_data) } ] ]);
+	const partitions = new Map([ [ "partition_table", { addr: 0x8000, data: partition_table_bin_data } ] ]);
 
 	// Registers NVS partitions in partitions list
 	for (const [ name, type, subtype, addr, size ] of csv_parse(partition_table_csv_data, { comment: "#" })) {
 		if (type === "data" && subtype === "nvs") {
 			const nvs_bin_data = await readFile(`${work_dir}/${name}.bin`);
-			assert(nvs_bin_data.byteLength === parse_int(size));
+			assert(nvs_bin_data.length === parse_int(size));
 			partitions.set(name, {
 				addr: parse_int(addr),
-				data: new Uint8Array(nvs_bin_data.buffer)
+				data: nvs_bin_data
 			});
 		}
 	}
