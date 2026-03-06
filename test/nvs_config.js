@@ -100,10 +100,10 @@ export function nvs_config_assert(nvs_config, nvs_cmp) {
  * @param {test_nvs_config} nvs_config
  * @param {import("../src/nvs.js").NVS} nvs
  */
-export function nvs_config_assert_nvs(nvs_config, nvs) {
+export async function nvs_config_assert_nvs(nvs_config, nvs) {
 	/** @type {test_nvs_compare} */
 	const nvs_parsed_cmp = {};
-	for (const [ namespace, key, value ] of nvs) {
+	for await (const [ namespace, key, value ] of nvs) {
 		const entries = nvs_parsed_cmp[namespace] ||= {};
 		entries[key] = value;
 	}

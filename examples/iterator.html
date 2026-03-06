@@ -18,8 +18,7 @@
 			const nvs = new NVS(await navigator.serial.requestPort());
 
 			// Filters out only SoftAP parameters
-			await nvs.all();
-			for (const [ namespace, key, value ] of nvs) {
+			for await (const [ namespace, key, value ] of nvs) {
 				if (namespace === "nvs.net80211" && key.startsWith("ap.")) {
 					console.log(key, value);
 				}

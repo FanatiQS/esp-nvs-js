@@ -1,7 +1,7 @@
 // @ts-check
 
 import { ESPLoader } from "./esptool.js";
-import { nvs_pages_set, nvs_pages_lookup, nvs_pages_next, nvs_entry_next, nvs_iterate } from "./nvs_parser.js";
+import { nvs_pages_set, nvs_pages_lookup, nvs_pages_next, nvs_entry_next, nvs_iterate_ns, nvs_iterate_value } from "./nvs_parser.js";
 import { nvs_transform_json, nvs_transform_html } from "./nvs_transform.js";
 
 export class NVS {
@@ -170,14 +170,49 @@ export class NVS {
 		while (await this.next());
 	}
 
+
+
 	/**
-	 * Iterates over all cached data
+	 * Asynchronously iterates over all NVS entries
+	 * @returns {AsyncIterator<[ string, string, import("./nvs_parser.js").nvs_value ]>}
 	 */
-	[Symbol.iterator]() {
-		return nvs_iterate(this.cache);
+	async* [Symbol.asyncIterator]() {
+		// Namespace numbers to string mappings
+		const namespaces_by_value = /** @type {Map<number,string>} */(new Map());
+
+		// Iterates through already cached entries
+		for (const [ namespace, ns ] of nvs_iterate_ns(this.cache)) {
+			namespaces_by_value.set(ns, namespace);
+			for (const [ key, value ] of nvs_iterate_value(this.cache, ns)) {
+				yield [ namespace, key, value ];
+			}
+		}
+
+		// Reads in more entries
+		/** @type {import("./nvs_parser.js").nvs_entry|null} */
+		let entry;
+		while ((entry = await this.next())) {
+			// Iterates through cached namespace entries for newly received namespace
+			if (entry.ns === 0) {
+				const ns = /** @type {number} */(entry.value);
+				namespaces_by_value.set(ns, entry.key);
+
+				if (!this.cache[ns]) continue;
+				for (const { key, value } of this.cache[ns].values()) {
+					if (value) {
+						yield [ entry.key, key, value ];
+					}
+				}
+			}
+			// Outputs entry if its namespaces name exists in cache
+			else {
+				const namespace = namespaces_by_value.get(entry.ns);
+				if (namespace != null) {
+					yield [ namespace, entry.key, entry.value ];
+				}
+			}
+		}
 	}
-
-
 
 	/**
 	 * Gets the value for the specified key in the specified namespace

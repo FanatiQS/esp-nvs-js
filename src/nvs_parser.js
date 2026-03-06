@@ -19,6 +19,8 @@
  * @property {nvs_chunks_info|null} info
  *
  * @typedef nvs_entry
+ * @property {number} ns
+ * @property {string} key
  * @property {nvs_value} value
  * @property {null} chunks
  *
@@ -312,6 +314,8 @@ function nvs_entry_parse(page, cache) {
 	}
 	/** @type {nvs_cache_entry} */
 	const entry = {
+		ns: ns,
+		key: key,
 		value: value,
 		chunks: chunks
 	};

@@ -156,7 +156,7 @@ test("search not scan all pages", async () => {
 test("request all by keys", async () => {
 	const nvs = new NVS(await loader_fetch());
 	await nvs.all();
-	for (const [ namespace, key, value ] of nvs) {
+	for await (const [ namespace, key, value ] of nvs) {
 		assert(await nvs.get(namespace, key) === value);
 	}
 });
@@ -196,7 +196,9 @@ test("erased entries", async () => {
 	// Asserts no entries are found after being marked as erased
 	const nvs = new NVS(loader_from_map(loader_map));
 	await nvs.all();
-	assert(Array.from(nvs).length === 0);
+	const iterator = nvs[Symbol.asyncIterator]();
+	const { done } = await iterator.next();
+	assert(done === true);
 });
 
 // Ensures blob data received in different orders is still handled correctly
@@ -389,9 +391,9 @@ test("incomplete blob in iterator", async () => {
 		await nvs.all();
 
 		// Test successful when iterating over nvs throws because of incomplete blob
-		const iterator = nvs[Symbol.iterator]();
+		const iterator = nvs[Symbol.asyncIterator]();
 		try {
-			while (!iterator.next().done);
+			while (!(await iterator.next()).done);
 		}
 		catch {
 			break;
