@@ -125,7 +125,7 @@ export class NVS {
 	 * @returns Found entry or null if not found
 	 */
 	async find(namespace, key) {
-		/** @type {import("./nvs_parser.js").nvs_entry|undefined} */
+		/** @type {import("./nvs_parser.js").nvs_cache_entry|undefined} */
 		let entry;
 
 		// Gets namespace number
@@ -138,7 +138,7 @@ export class NVS {
 		const ns = /** @type {number} */(entry.value);
 
 		// Ensures namespace exists
-		/** @type {Map<string,import("./nvs_parser.js").nvs_entry>} */
+		/** @type {import("./nvs_parser.js").nvs_cache_namespace} */
 		let entries;
 		while (!(entries = this.cache[ns])) {
 			if (!await this.next()) {
@@ -160,7 +160,7 @@ export class NVS {
 			}
 		}
 
-		return entry;
+		return /** @type {import("./nvs_parser.js").nvs_entry} */(entry);
 	}
 
 	/**

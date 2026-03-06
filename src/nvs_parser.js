@@ -19,10 +19,12 @@
  * @property {nvs_chunks_info|null} info
  *
  * @typedef nvs_entry
- * @property {nvs_value|null} value
- * @property {nvs_chunks|null} chunks
+ * @property {nvs_value} value
+ * @property {null} chunks
  *
- * @typedef {Map<string,nvs_entry>[]} nvs_cache
+ * @typedef {Omit<nvs_entry, "value"|"chunks"> & { value: nvs_value|null, chunks: nvs_chunks|null}} nvs_cache_entry
+ * @typedef {Map<string,nvs_cache_entry>} nvs_cache_namespace
+ * @typedef {nvs_cache_namespace[]} nvs_cache
  *
  * @typedef {import("./esptool.js").ESPLoader} ESPLoader
  */
@@ -127,7 +129,7 @@ function nvs_bigint_simplify(bigint) {
  * Parses the entry pointed to in the page
  * @param {nvs_page} page NVS page to parse data from
  * @param {nvs_cache} cache Cache for storing parsed NVS entries
- * @returns Parsed entry or null if entry is incomplete, erased or empty
+ * @returns {nvs_entry|null} Parsed entry or null if entry is incomplete, erased or empty
  */
 function nvs_entry_parse(page, cache) {
 	// Gets next entry's state from bitmap
@@ -228,7 +230,7 @@ function nvs_entry_parse(page, cache) {
 				if (entry.chunks.info && entry.chunks.info.count === 1) {
 					entry.value = chunk;
 					entry.chunks = null;
-					return entry;
+					return /** @type {typeof entry & { value: typeof entry.value, chunks: typeof entry.chunks }} */(entry);
 				}
 
 				// Finalizes multi-chunk blob by joining chunks into a new buffer when all chunks are available
@@ -237,7 +239,7 @@ function nvs_entry_parse(page, cache) {
 				if (entry.chunks.info && entry.chunks.len === entry.chunks.info.count) {
 					entry.value = nvs_chunks_assemble(entry.chunks.info, entry.chunks);
 					entry.chunks = null;
-					return entry;
+					return /** @type {typeof entry & { value: typeof entry.value, chunks: typeof entry.chunks }} */(entry);
 				}
 
 				return null;
@@ -273,7 +275,7 @@ function nvs_entry_parse(page, cache) {
 				if (info.count === 1) {
 					entry.value = entry.chunks.arr[info.start];
 					entry.chunks = null;
-					return entry;
+					return /** @type {typeof entry & { value: typeof entry.value, chunks: typeof entry.chunks }} */(entry);
 				}
 
 				// Finalizes multi-chunk blob by joining chunks into a new buffer when all chunks are available
@@ -281,7 +283,7 @@ function nvs_entry_parse(page, cache) {
 				if (entry.chunks.len === info.count) {
 					entry.value = nvs_chunks_assemble(info, entry.chunks);
 					entry.chunks = null;
-					return entry;
+					return /** @type {typeof entry & { value: typeof entry.value, chunks: typeof entry.chunks }} */(entry);
 				}
 
 				// Stores blob index info for use when all chunks are available
@@ -308,14 +310,15 @@ function nvs_entry_parse(page, cache) {
 	if (entries.has(key)) {
 		throw new Error(`Found multiple entries for: 0x${ns.toString(16).padStart(2, "0")} "${key}"`);
 	}
-	const entry = /** @type {nvs_entry} */({
+	/** @type {nvs_cache_entry} */
+	const entry = {
 		value: value,
 		chunks: chunks
-	});
+	};
 	entries.set(key, entry);
 
 	// Returns entry unless an incomplete blob
-	return (chunks) ? null : entry;
+	return (chunks) ? null : /** @type {typeof entry & { value: nvs_value, chunks: typeof chunks }} */(entry);
 }
 
 /**
