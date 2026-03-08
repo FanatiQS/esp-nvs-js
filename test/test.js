@@ -2,7 +2,7 @@
 
 import { NVS } from "../src/nvs.js";
 import * as module from "../src/index.js";
-import { nvs_pages_next, nvs_entry_next, nvs_iterate_ns, nvs_entry_type } from "../src/nvs_parser.js";
+import { nvs_iterate_ns, nvs_entry_type } from "../src/nvs_parser.js";
 import { ESPLoader } from "../src/esptool.js";
 
 import { assert } from "./assert.js";
@@ -403,26 +403,16 @@ test("incomplete blob in iterator", async () => {
 
 // Asserts that namespace iterator throws if it encounters a namespace with invalid data type
 test("invalid namespace data type in cache", async () => {
-	// Gets NVS page to fill cache from
-	const addr = await loader_map_get_addr();
-	const loader_map = loader_map_from(addr, await loader_map_get_data());
-	const loader = loader_from_map(loader_map);
-	await loader.connect();
-	await loader.runStub();
-	const page = await nvs_pages_next(loader, [ addr ]);
-	assert(page);
-
 	// Sets first namespace entry to have incorrect data type
-	/** @type {import("../src/nvs_parser.js").nvs_cache} */
-	const cache = [];
-	const entry = nvs_entry_next(page, cache);
+	const nvs = new NVS(await loader_fetch());
+	const entry = await nvs.next();
 	assert(entry);
 	assert(entry.value === 1);
-	assert(cache[0].values().next().value === entry);
+	assert(Array.from(nvs.cache[0].values())[0] === entry);
 	entry.value = "invalid type for namespace";
 
 	// Iterator should throw if it finds invalid data type for namespace
-	assert.throws(() => nvs_iterate_ns(cache).next());
+	assert.throws(() => nvs_iterate_ns(nvs.cache).next());
 });
 
 
