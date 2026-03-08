@@ -34,8 +34,10 @@ export class NVS {
 		 * @private
 		 */
 		this.page = null;
-
-		/** @type {import("./nvs_parser.js").nvs_cache} */
+		/**
+		 * @type {import("./nvs_parser.js").nvs_cache}
+		 * @readonly
+		 */
 		this.cache = [ new Map() ];
 	}
 
