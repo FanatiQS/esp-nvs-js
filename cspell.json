@@ -3,6 +3,7 @@
 		"esptool",
 		"webserial",
 		"ssid",
-		"fanatiqs"
+		"fanatiqs",
+		"baudrate"
 	]
 }
