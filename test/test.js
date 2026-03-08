@@ -2,12 +2,12 @@
 
 import { NVS } from "../src/nvs.js";
 import * as module from "../src/index.js";
-import { nvs_iterate_ns, nvs_entry_type } from "../src/nvs_parser.js";
+import { nvs_iterate_ns, nvs_iterate, nvs_entry_type } from "../src/nvs_parser.js";
 import { ESPLoader } from "../src/esptool.js";
 
 import { assert } from "./assert.js";
 import { loader_from_map, loader_map_get_addr, loader_map_get_data, loader_map_from, loader_map_fetch, loader_fetch } from "./loader.js";
-import { nvs_config_default, nvs_config2, nvs_config_reorder, nvs_config_assert, nvs_config_assert_nvs } from "./nvs_config.js";
+import { nvs_config_default, nvs_config2, nvs_config_reorder, nvs_config_assert, nvs_config_assert_iterable } from "./nvs_config.js";
 import { serialport_stub } from "./stub_serialport.js";
 
 // NVS format offsets and sizes
@@ -96,8 +96,7 @@ test("fetch pages assert all requested", async () => {
 // Asserts iterator data is identical to configuration used to create it
 test("load and parse default nvs partition", async () => {
 	const nvs = new NVS(await loader_fetch());
-	await nvs.all();
-	nvs_config_assert_nvs(nvs_config_default, nvs);
+	await nvs_config_assert_iterable(nvs_config_default, nvs);
 });
 
 // Asserts that specifying a non default NVS partition parses correct partition
@@ -105,8 +104,7 @@ test("load and parse non default nvs partition", async () => {
 	const nvs = new NVS(await loader_fetch("nvs2"));
 	const found = await nvs.fetchPartition("nvs2");
 	assert(found);
-	await nvs.all();
-	nvs_config_assert_nvs(nvs_config2, nvs);
+	await nvs_config_assert_iterable(nvs_config2, nvs);
 });
 
 // Searches for NVS partition by name without success
@@ -155,7 +153,6 @@ test("search not scan all pages", async () => {
 // Asserts all entries can be requested
 test("request all by keys", async () => {
 	const nvs = new NVS(await loader_fetch());
-	await nvs.all();
 	for await (const [ namespace, key, value ] of nvs) {
 		assert(await nvs.get(namespace, key) === value);
 	}
@@ -195,7 +192,6 @@ test("erased entries", async () => {
 
 	// Asserts no entries are found after being marked as erased
 	const nvs = new NVS(loader_from_map(loader_map));
-	await nvs.all();
 	const iterator = nvs[Symbol.asyncIterator]();
 	const { done } = await iterator.next();
 	assert(done === true);
@@ -204,8 +200,7 @@ test("erased entries", async () => {
 // Ensures blob data received in different orders is still handled correctly
 test("out of order blob", async () => {
 	for await (const nvs of pages_reorder("reorder")) {
-		await nvs.all();
-		nvs_config_assert_nvs(nvs_config_reorder, nvs);
+		await nvs_config_assert_iterable(nvs_config_reorder, nvs);
 	}
 });
 
@@ -372,6 +367,20 @@ test("incomplete blob when searching", async () => {
 });
 
 
+
+// Asserts nvs_iterate correctly iterates over all entries
+test("iterate cache manually", async () => {
+	const nvs = new NVS(await loader_fetch());
+	await nvs.all();
+	nvs_config_assert_iterable(nvs_config_default, nvs_iterate(nvs.cache));
+});
+
+// Asserts correctly iterating over already parsed data
+test("iterate all parsed", async () => {
+	const nvs = new NVS(await loader_fetch());
+	await nvs.all();
+	await nvs_config_assert_iterable(nvs_config_default, nvs);
+});
 
 // Asserts that clearing out some of the pages will result in an incomplete blob when iterating
 test("incomplete blob in iterator", async () => {

@@ -96,14 +96,14 @@ export function nvs_config_assert(nvs_config, nvs_cmp) {
 }
 
 /**
- * Asserts that configuration object used for generating firmware buffer is identical to NVS parser output
+ * Asserts that configuration object used for generating firmware buffer is identical to result from iterable
  * @param {test_nvs_config} nvs_config
- * @param {import("../src/nvs.js").NVS} nvs
+ * @param {AsyncIterable<[string,string,nvs_value]> | Iterable<[string,string,nvs_value]>} iterable
  */
-export async function nvs_config_assert_nvs(nvs_config, nvs) {
+export async function nvs_config_assert_iterable(nvs_config, iterable) {
 	/** @type {test_nvs_compare} */
 	const nvs_parsed_cmp = {};
-	for await (const [ namespace, key, value ] of nvs) {
+	for await (const [ namespace, key, value ] of iterable) {
 		const entries = nvs_parsed_cmp[namespace] ||= {};
 		entries[key] = value;
 	}
