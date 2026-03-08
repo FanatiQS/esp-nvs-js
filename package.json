@@ -18,11 +18,14 @@
 		"chai-as-promised": "^8.0.2",
 		"csv-parse": "^6.1.0",
 		"eslint": "^9.39.2",
+		"stylelint": "^16.26.1",
+		"stylelint-config-standard": "^39.0.1",
 		"typescript": "^5.9.3"
 	},
 	"scripts": {
 		"lint:ts": "npx tsc -p lint/tsconfig_browser.json && npx tsc -p lint/tsconfig_test_node.json",
 		"lint:eslint": "npx eslint --config lint/eslint.js",
+		"lint:stylelint": "npx stylelint --config lint/stylelint.js ./src/**/*.css",
 		"lint": "npm run lint:ts && npm run lint:eslint",
 		"test": "node ./test/index.js"
 	}
