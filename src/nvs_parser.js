@@ -1,32 +1,32 @@
 // @ts-check
 
 /**
- * @typedef nvs_page
- * @property {number} addr
- * @property {DataView} view
- * @property {number} index
+ * @typedef nvs_page NVS page state used for parsing
+ * @property {number} addr Address where page is located in flash
+ * @property {DataView} view NVS page data
+ * @property {number} index Working index state for parsing entries
  *
- * @typedef {number|bigint|string|Uint8Array} nvs_value
+ * @typedef {number|bigint|string|Uint8Array} nvs_value Union of possible NVS data types
  *
- * @typedef nvs_chunks_info
- * @property {number} size
- * @property {number} count
- * @property {number} start
+ * @typedef nvs_chunks_info Blob chunks metadata
+ * @property {number} size Full size of blob data
+ * @property {number} count Number of chunks blob is split into
+ * @property {number} start First chunks index
  *
- * @typedef nvs_chunks
- * @property {Uint8Array[]} arr
- * @property {number} len
- * @property {nvs_chunks_info|null} info
+ * @typedef nvs_chunks Blob work cache
+ * @property {Uint8Array[]} arr Chunks to assemble into blob
+ * @property {number} len Number of chunks added to array
+ * @property {nvs_chunks_info|null} info Blob metadata
  *
- * @typedef nvs_entry
- * @property {number} ns
- * @property {string} key
- * @property {nvs_value} value
- * @property {null} chunks
+ * @typedef nvs_entry NVS entry returned by parser
+ * @property {number} ns Namespace index where entry was found
+ * @property {string} key Key used for entry
+ * @property {nvs_value} value Value parsed from entry
+ * @property {null} chunks Blob work cache, only used during parsing
  *
- * @typedef {Omit<nvs_entry, "value"|"chunks"> & { value: nvs_value|null, chunks: nvs_chunks|null}} nvs_cache_entry
- * @typedef {Map<string,nvs_cache_entry>} nvs_cache_namespace
- * @typedef {nvs_cache_namespace[]} nvs_cache
+ * @typedef {Omit<nvs_entry, "value"|"chunks"> & { value: nvs_value|null, chunks: nvs_chunks|null}} nvs_cache_entry Entry in cache entries map
+ * @typedef {Map<string,nvs_cache_entry>} nvs_cache_namespace Entires map in cache
+ * @typedef {nvs_cache_namespace[]} nvs_cache Cache for parsed data whose internals are considered private
  *
  * @typedef {import("./esptool.js").ESPLoader} ESPLoader
  */
@@ -87,11 +87,11 @@ export const nvs_entry_type = {
 
 
 /**
- * Gets a possibly NULL terminated ASCII string from an array buffer.
- * If the string is not NULL terminated, the entire length is used
- * @param {ArrayBufferLike} buffer The buffer to extract the string from
- * @param {number} offset The start offset into the buffer
- * @param {number} length The max length of the string
+ * Gets a possibly NULL terminated string buffer from an array buffer.
+ * If the string is not NULL terminated, the entire length is used.
+ * @param {ArrayBufferLike} buffer The buffer to null terminate
+ * @param {number} offset Starting offset into the buffer
+ * @param {number} length Max length of the string
  */
 function nvs_buffer_null_terminate(buffer, offset, length) {
 	const buf = new Uint8Array(buffer, offset, length);
@@ -404,7 +404,7 @@ export async function nvs_pages_lookup(loader, addr_list, name = "nvs", addr = 0
  * Reads next NVS page from device
  * @param {ESPLoader} loader Connected ESPTool loader with stub running
  * @param {number[]} addr_list Address list to get the next page address from
- * @returns {Promise<nvs_page|null>}
+ * @returns {Promise<nvs_page|null>} Next NVS page that could contain entries
  * @throws Any ESPLoader exceptions
  */
 export async function nvs_pages_next(loader, addr_list) {
@@ -434,7 +434,8 @@ export async function nvs_pages_next(loader, addr_list) {
 /**
  * Iterates over all cached namespaces
  * @param {nvs_cache} cache Cache storing parsed NVS entries
- * @returns {Generator<[string,number],void,void>} Namespace index to use with cache
+ * @returns {Generator<[string,number],void,void>} Namespace and namespace index to use with cache
+ * @throws Invalid cache namespace entry
  */
 export function* nvs_iterate_ns(cache) {
 	for (const [ namespace, entry ] of cache[0]) {
@@ -450,7 +451,8 @@ export function* nvs_iterate_ns(cache) {
  * Iterates over all cached key-value-pairs in namespace
  * @param {nvs_cache} cache Cache storing parsed NVS entries
  * @param {number} ns Namespace index
- * @returns {Generator<[string,nvs_value],void,void>}
+ * @returns {Generator<[string,nvs_value],void,void>} Key and value in specified namespace
+ * @throws Cache not fully parsed or corrupt
  */
 export function* nvs_iterate_value(cache, ns) {
 	if (ns in cache) {
@@ -465,8 +467,10 @@ export function* nvs_iterate_value(cache, ns) {
 
 /**
  * Iterates over all cached key-value-pairs
- * @param {nvs_cache} cache
- * @returns {Generator<[string,string,nvs_value],void,void>}
+ * @param {nvs_cache} cache Cache storing parsed NVS entries
+ * @returns {Generator<[string,string,nvs_value],void,void>} Namespace, key and value
+ * @throws Invalid cache namespace entry
+ * @throws Cache not fully parsed or corrupt
  */
 export function* nvs_iterate(cache) {
 	for (const [ namespace, ns ] of nvs_iterate_ns(cache)) {
