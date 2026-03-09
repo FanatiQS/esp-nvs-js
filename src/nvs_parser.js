@@ -360,7 +360,7 @@ export function nvs_pages_set(addr, len, addr_list) {
 	}
 
 	// Adds partition page address range to address list
-	for (let i = 0; i < len; i += 0x1000) {
+	for (let i = 0; i < len; i += PAGE_SIZE) {
 		addr_list.push(addr + i);
 	}
 }
