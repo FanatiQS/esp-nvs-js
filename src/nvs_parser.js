@@ -101,15 +101,15 @@ function nvs_buffer_null_terminate(buffer, offset, length) {
 
 /**
  * Joins all chunks into a single buffer
- * @param {nvs_chunks_info} info
- * @param {nvs_chunks} chunks
+ * @param {nvs_chunks_info} info Metadata describing how to assemble chunks
+ * @param {Uint8Array[]} chunks Buffer chunks to assemble into single buffer
  * @throws Corrupt NVS data
  */
 function nvs_chunks_assemble(info, chunks) {
 	const buf = new Uint8Array(info.size);
 	let offset = 0;
-	for (let i = 0; i < chunks.len; i++) {
-		const chunk = chunks.arr[info.start + i];
+	for (let i = 0; i < info.count; i++) {
+		const chunk = chunks[info.start + i];
 		if (!chunk) {
 			throw new Error("Missing chunk when assembling");
 		}
@@ -241,7 +241,7 @@ function nvs_entry_parse(page, cache) {
 				entry.chunks.len++;
 				entry.chunks.arr[chunk_index] = chunk;
 				if (entry.chunks.info && entry.chunks.len === entry.chunks.info.count) {
-					entry.value = nvs_chunks_assemble(entry.chunks.info, entry.chunks);
+					entry.value = nvs_chunks_assemble(entry.chunks.info, entry.chunks.arr);
 					entry.chunks = null;
 					return /** @type {typeof entry & { value: typeof entry.value, chunks: typeof entry.chunks }} */(entry);
 				}
@@ -285,7 +285,7 @@ function nvs_entry_parse(page, cache) {
 				// Finalizes multi-chunk blob by joining chunks into a new buffer when all chunks are available
 				entry.chunks.len++;
 				if (entry.chunks.len === info.count) {
-					entry.value = nvs_chunks_assemble(info, entry.chunks);
+					entry.value = nvs_chunks_assemble(info, entry.chunks.arr);
 					entry.chunks = null;
 					return /** @type {typeof entry & { value: typeof entry.value, chunks: typeof entry.chunks }} */(entry);
 				}
