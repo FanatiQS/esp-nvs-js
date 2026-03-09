@@ -103,6 +103,7 @@ function nvs_buffer_null_terminate(buffer, offset, length) {
  * Joins all chunks into a single buffer
  * @param {nvs_chunks_info} info
  * @param {nvs_chunks} chunks
+ * @throws Corrupt NVS data
  */
 function nvs_chunks_assemble(info, chunks) {
 	const buf = new Uint8Array(info.size);
@@ -132,6 +133,7 @@ function nvs_bigint_simplify(bigint) {
  * @param {nvs_page} page NVS page to parse data from
  * @param {nvs_cache} cache Cache for storing parsed NVS entries
  * @returns {nvs_entry|null} Parsed entry or null if entry is incomplete, erased or empty
+ * @throws Corrupt NVS data
  */
 function nvs_entry_parse(page, cache) {
 	// Gets next entry's state from bitmap
@@ -330,6 +332,7 @@ function nvs_entry_parse(page, cache) {
  * @param {nvs_page} page NVS page to parse data from
  * @param {nvs_cache} cache Cache for storing parsed NVS entries
  * @returns Parsed entry or null if no more entries are available in the page
+ * @throws Corrupt NVS data
  */
 export function nvs_entry_next(page, cache) {
 	while (page.index < ENTRIES_COUNT_MAX) {
@@ -348,6 +351,7 @@ export function nvs_entry_next(page, cache) {
  * @param {number} addr Address of the NVS partition
  * @param {number} len Size of the NVS partition
  * @param {number[]} addr_list Empty list of NVS page addresses to add the extracted addresses to
+ * @throws Partition already set
  */
 export function nvs_pages_set(addr, len, addr_list) {
 	// Requires address list to be empty before adding new pages
@@ -368,6 +372,8 @@ export function nvs_pages_set(addr, len, addr_list) {
  * @param {string} [name] Partition name to get the page addresses for
  * @param {number} [addr] Address of the partition table
  * @return Indicates if NVS partition was found or not
+ * @throws Any ESPLoader exceptions
+ * @throws Partition already set
  */
 export async function nvs_pages_lookup(loader, addr_list, name = "nvs", addr = 0x8000) {
 	// Reads partition table from device
@@ -399,6 +405,7 @@ export async function nvs_pages_lookup(loader, addr_list, name = "nvs", addr = 0
  * @param {ESPLoader} loader Connected ESPTool loader with stub running
  * @param {number[]} addr_list Address list to get the next page address from
  * @returns {Promise<nvs_page|null>}
+ * @throws Any ESPLoader exceptions
  */
 export async function nvs_pages_next(loader, addr_list) {
 	/** @type {number|undefined} */
