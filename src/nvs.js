@@ -1,7 +1,7 @@
 // @ts-check
 
 import { ESPLoader } from "./esptool.js";
-import { nvs_pages_set, nvs_pages_lookup, nvs_pages_next, nvs_entry_next, nvs_iterate_ns, nvs_iterate_value } from "./nvs_parser.js";
+import { nvs_pages_set, nvs_pages_lookup, nvs_pages_next, nvs_entry_next, nvs_iterate_ns } from "./nvs_parser.js";
 import { nvs_transform_json, nvs_transform_html } from "./nvs_transform.js";
 
 export class NVS {
@@ -183,8 +183,10 @@ export class NVS {
 		// Iterates through already cached entries
 		for (const [ namespace, ns ] of nvs_iterate_ns(this.cache)) {
 			namespaces_by_value.set(ns, namespace);
-			for (const [ key, value ] of nvs_iterate_value(this.cache, ns)) {
-				yield [ namespace, key, value ];
+			if (!this.cache[ns]) continue;
+			for (const [ key, entry ] of this.cache[ns]) {
+				if (entry.value == null) continue;
+				yield [ namespace, key, entry.value ];
 			}
 		}
 
@@ -199,9 +201,8 @@ export class NVS {
 
 				if (!this.cache[ns]) continue;
 				for (const { key, value } of this.cache[ns].values()) {
-					if (value) {
-						yield [ entry.key, key, value ];
-					}
+					if (!value) continue;
+					yield [ entry.key, key, value ];
 				}
 			}
 			// Outputs entry if its namespaces name exists in cache

@@ -211,6 +211,14 @@ test("full value between blob chunks in search", async () => {
 	}
 });
 
+// Assert that incomplete data in cache when async iterator starts works correctly
+test("iterator with incomplete cache", async () => {
+	for await (const nvs of pages_reorder("reorder")) {
+		await nvs.next();
+		await nvs_config_assert_iterable(nvs_config_reorder, nvs);
+	}
+});
+
 // Parsing should do nothing if it has already parsed to the end
 test("nothing after complete", async () => {
 	const nvs = new NVS(await loader_fetch());
@@ -400,9 +408,9 @@ test("incomplete blob in iterator", async () => {
 		await nvs.all();
 
 		// Test successful when iterating over nvs throws because of incomplete blob
-		const iterator = nvs[Symbol.asyncIterator]();
+		const iterator = nvs_iterate(nvs.cache);
 		try {
-			while (!(await iterator.next()).done);
+			while (!iterator.next().done);
 		}
 		catch {
 			break;
