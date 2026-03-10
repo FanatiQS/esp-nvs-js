@@ -474,6 +474,12 @@ test("HTML generation", async () => {
 
 
 
+// Asserts that a type cast used in the NVS constructor is still required
+test("internal cast required", () => {
+	// @ts-expect-error
+	new ESPLoader({ port: serialport_stub() });
+});
+
 // Ensures constructor with serial port creates ESPLoader using serial port
 test("serial port NVS constructor argument", async () => {
 	const port = serialport_stub();

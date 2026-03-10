@@ -1,6 +1,6 @@
 // @ts-check
 
-import { ESPLoader, Transport } from "./esptool.js";
+import { ESPLoader } from "./esptool.js";
 import { nvs_pages_set, nvs_pages_lookup, nvs_pages_next, nvs_entry_next, nvs_iterate_ns, nvs_iterate_value } from "./nvs_parser.js";
 import { nvs_transform_json, nvs_transform_html } from "./nvs_transform.js";
 
@@ -11,10 +11,7 @@ export class NVS {
 	constructor(loader) {
 		if (loader instanceof SerialPort) {
 			/** @private */
-			this.loader = new ESPLoader({
-				transport: new Transport(loader),
-				baudrate: 115200
-			});
+			this.loader = new ESPLoader(/** @type {import("esptool-js").LoaderOptions} */({ port: loader }));
 		}
 		else if (loader) {
 			/** @private */

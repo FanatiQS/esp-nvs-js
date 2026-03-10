@@ -4,7 +4,6 @@
 		"webserial",
 		"ssid",
 		"fanatiqs",
-		"baudrate",
 		"stylelint"
 	]
 }
