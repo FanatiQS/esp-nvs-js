@@ -9,6 +9,7 @@
 }
 [is=async-button][aria-working=true] {
 	cursor: default;
+	pointer-events: none;
 }
 
 /* Shows spinner when working */
