@@ -53,6 +53,7 @@ class AsyncButton extends HTMLButtonElement {
 	async dispatch(listener, event, self = this) {
 		if (!this.working) {
 			this.setAttribute("aria-working", "true");
+			this.disabled = true;
 		}
 		this.working++;
 
@@ -63,6 +64,7 @@ class AsyncButton extends HTMLButtonElement {
 			this.working--;
 			if (!this.working) {
 				this.removeAttribute("aria-working");
+				this.disabled = false;
 			}
 		}
 	}
