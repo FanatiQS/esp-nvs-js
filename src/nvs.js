@@ -7,6 +7,7 @@ import { nvs_transform_json, nvs_transform_html } from "./nvs_transform.js";
 export class NVS {
 	/**
 	 * @param {ESPLoader|SerialPort} loader ESPLoader from ESPTool library or WebSerial SerialPort
+	 * @throws {TypeError} Argument is not an ESPLoader or a SerialPort
 	 */
 	constructor(loader) {
 		if (loader instanceof SerialPort) {
@@ -18,7 +19,7 @@ export class NVS {
 			this.loader = loader;
 		}
 		else {
-			throw new Error("No serial port or loader");
+			throw new TypeError("Invalid argument: 'loader' must be an ESPLoader or a SerialPort");
 		}
 
 		/**
@@ -53,6 +54,7 @@ export class NVS {
 	 * If no partition have been specified before parsing, default NVS page will automatically be fetched from partition table
 	 * @param {number} addr Address of an NVS partition
 	 * @param {number} len Size of the NVS partition
+	 * @throws Partition already set
 	 */
 	setPartition(addr, len) {
 		nvs_pages_set(addr, len, this.addr_list);
@@ -63,6 +65,7 @@ export class NVS {
 	 * If no partition have been specified before parsing, default NVS page will automatically be fetched from partition table
 	 * @param {string} [partitionName="nvs"] Partition name to get the page addresses for
 	 * @param {number} [addr=0x8000] Address of the partition table
+	 * @throws Partition already set
 	 */
 	async fetchPartition(partitionName, addr) {
 		// Connects to device if not already connected
