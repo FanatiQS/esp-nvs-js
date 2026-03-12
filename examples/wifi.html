@@ -2,7 +2,11 @@
 <html lang="en">
 <head>
 	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<title>WiFi Example</title>
+
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/FanatiQS/esp-nvs-js@master/src/button.css">
+	<script src="https://cdn.jsdelivr.net/gh/FanatiQS/esp-nvs-js@master/src/button.js"></script>
 	<style>
 		table, td {
 			border: 1px solid black;
@@ -17,8 +21,6 @@
 			padding: .5em;
 		}
 	</style>
-	<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/FanatiQS/esp-nvs-js@master/src/button.css">
-	<script src="https://cdn.jsdelivr.net/gh/FanatiQS/esp-nvs-js@master/src/button.js"></script>
 </head>
 <body>
 	<p>Reads WiFi configuration data from device over USB</p>
@@ -42,6 +44,7 @@
 			<td id="ap-password"></td>
 		</tr>
 	</table>
+
 	<script type="module">
 		// cspell: ignore pswd
 

@@ -2,7 +2,9 @@
 <html lang="en">
 <head>
 	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<title>Simple example</title>
+
 	<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/FanatiQS/esp-nvs-js@master/src/button.css">
 	<script src="https://cdn.jsdelivr.net/gh/FanatiQS/esp-nvs-js@master/src/button.js"></script>
 </head>
@@ -11,6 +13,7 @@
 	<button id="read" is="async-button">Read</button>
 	<span class="webserial-unsupported-message">WebSerial not supported</span>
 	<pre id="available" hidden>Output available in the developer console</pre>
+
 	<script type="module">
 		import { NVS } from "https://cdn.jsdelivr.net/gh/FanatiQS/esp-nvs-js@master/src/nvs.js";
 
