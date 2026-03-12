@@ -3,8 +3,8 @@
 <head>
 	<meta charset="UTF-8">
 	<title>Simple example</title>
-	<link rel="stylesheet" href="../src/button.css">
-	<script src="../src/button.js"></script>
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/FanatiQS/esp-nvs-js@master/src/button.css">
+	<script src="https://cdn.jsdelivr.net/gh/FanatiQS/esp-nvs-js@master/src/button.js"></script>
 </head>
 <body>
 	<p>Reads single NVS configurations from device over USB</p>
@@ -12,7 +12,7 @@
 	<span class="webserial-unsupported-message">WebSerial not supported</span>
 	<pre id="available" hidden>Output available in the developer console</pre>
 	<script type="module">
-		import { NVS } from "../src/nvs.js";
+		import { NVS } from "https://cdn.jsdelivr.net/gh/FanatiQS/esp-nvs-js@master/src/nvs.js";
 
 		document.getElementById("read").addEventListener("click", async () => {
 			const nvs = new NVS(await navigator.serial.requestPort());

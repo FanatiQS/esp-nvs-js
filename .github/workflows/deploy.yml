@@ -29,7 +29,6 @@ jobs:
                 tsconfig: ./lint/tsconfig_browser.json
 
             - run: cp -r ./examples ./_site/examples
-            - run: cp -r ./src ./_site/src
 
             - run: npm test
             - run: mv ./coverage/lcov-report ./_site/coverage
