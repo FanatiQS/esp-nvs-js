@@ -12,7 +12,7 @@
 	<p>Reads SoftAP configuration from device over USB</p>
 	<button id="read" is="async-button">Read</button>
 	<span class="webserial-unsupported-message">⚠ WebSerial not supported</span>
-	<pre id="available" hidden>Output available in the developer console</pre>
+	<pre>Output available in the developer console</pre>
 
 	<script type="module">
 		import { NVS } from "https://cdn.jsdelivr.net/gh/FanatiQS/esp-nvs-js@master/src/nvs.js";
@@ -26,8 +26,6 @@
 					console.log(key, value);
 				}
 			}
-
-			document.getElementById("available").hidden = false;
 		});
 	</script>
 </body>

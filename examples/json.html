@@ -12,7 +12,7 @@
 	<p>Reads all NVS configurations from device over USB and outputs it as JSON</p>
 	<button id="read" is="async-button">Read</button>
 	<span class="webserial-unsupported-message">⚠ WebSerial not supported</span>
-	<pre id="available" hidden>JSON output available in the developer console</pre>
+	<pre>JSON output available in the developer console</pre>
 
 	<script type="module">
 		import { NVS } from "https://cdn.jsdelivr.net/gh/FanatiQS/esp-nvs-js@master/src/nvs.js";
@@ -20,7 +20,6 @@
 		document.getElementById("read").addEventListener("click", async () => {
 			const nvs = new NVS(await navigator.serial.requestPort());
 			console.log(await nvs.toJSON());
-			document.getElementById("available").hidden = false;
 		});
 	</script>
 </body>
