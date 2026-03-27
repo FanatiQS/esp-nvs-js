@@ -14,7 +14,7 @@ await startTestRunner({
 	config: {
 		files: [
 			`${import.meta.dirname}/test.js`,
-			`${import.meta.dirname}/button.html`
+			`${import.meta.dirname}/button.js`
 		],
 		nodeResolve: true,
 		coverage: true,
