@@ -9,14 +9,14 @@ import { assert } from "./assert.js";
 class CallbackManager {
 	constructor() {
 		// Creates async button with HTML
-		document.body.innerHTML = `<button is="async-button">Click Me!</button>`;
+		document.body.innerHTML = "<button is=\"async-button\">Click Me!</button>";
 		this.btn = /** @type {HTMLButtonElement} */(document.body.lastElementChild);
 
 		// Creates async callback we can know when it resolves and how many times it was called
 		/** @type {Promise<void>|null} */
 		this.next = null;
 		this.counter = 0;
-		this.callback = (event) => {
+		this.callback = (/** @type {Event} */event) => {
 			assert(event instanceof Event);
 			assert(this.btn.getAttribute("aria-working"));
 			this.counter++;
@@ -25,12 +25,15 @@ class CallbackManager {
 		};
 	}
 
-	// Waits until async callback has resolved and returns how many times the callback was called
+	/**
+	 * Waits until async callback has resolved and returns how many times the callback was called
+	 * @param {boolean} [working]
+	 */
 	async called(working) {
 		assert(this.next);
 		await this.next;
 		this.next = null;
-		assert(!!this.btn.getAttribute("aria-working") === !!working);
+		assert(this.btn.getAttribute("aria-working") === ((working) ? "true" : null));
 		return this.counter;
 	}
 }
@@ -38,7 +41,7 @@ class CallbackManager {
 
 
 test("webserial availability indicator", async () => {
-	assert(document.querySelector("html").classList.contains("webserial-available"));
+	assert(document.querySelector("html")?.classList.contains("webserial-available"));
 });
 
 test("click event listener", async () => {
@@ -142,7 +145,7 @@ test("multiple register different types", async () => {
 
 test("caller context", async () => {
 	const cbm = new CallbackManager();
-	cbm.btn.addEventListener("click", function (event) {
+	cbm.btn.addEventListener("click", /** @this {HTMLButtonElement}*/function callback(event) {
 		assert(this === cbm.btn);
 		cbm.callback(event);
 	});
@@ -153,7 +156,8 @@ test("caller context", async () => {
 test("handler context", async () => {
 	const cbm = new CallbackManager();
 	const handler = {
-		handleEvent: function (event) {
+		/** @param {Event} event */
+		handleEvent(event) {
 			assert(this === handler);
 			cbm.callback(event);
 		}
@@ -194,7 +198,9 @@ test("event property getter", () => {
 
 test("overlapping callbacks", async () => {
 	// Promise that resolves after callback manager callback
-	const promise = new Promise((resolve) => setTimeout(resolve));
+	const promise = new Promise((resolve) => {
+		setTimeout(resolve);
+	});
 
 	// Registers callback manager callback and asserts that button is still "working"
 	const cbm = new CallbackManager();
