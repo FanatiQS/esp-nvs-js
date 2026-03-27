@@ -1,6 +1,6 @@
 {
 	"name": "esp-nvs-js",
-	"version": "0.2.0",
+	"version": "0.3.0",
 	"author": "FanatiQS",
 	"type": "module",
 	"main": "./src/index.js",
