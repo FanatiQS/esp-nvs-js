@@ -1,5 +1,7 @@
 // @ts-check
 
+/// <reference types="mocha" />
+
 import { NVS } from "../src/nvs.js";
 import * as module from "../src/index.js";
 import { nvs_iterate_ns, nvs_iterate, nvs_entry_type } from "../src/nvs_parser.js";
