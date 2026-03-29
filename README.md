@@ -23,7 +23,7 @@ See [CanIUse](https://caniuse.com/web-serial) for browser support.
 
 ## Live Demos
 
-* [Simple example](https://fanatiqs.github.io/esp-nvs-js/examples/simple.html)
+* [Single value example](https://fanatiqs.github.io/esp-nvs-js/examples/single_value.html)
 * [JSON example](https://fanatiqs.github.io/esp-nvs-js/examples/json.html)
 * [WiFi example](https://fanatiqs.github.io/esp-nvs-js/examples/wifi.html)
 * [Table example](https://fanatiqs.github.io/esp-nvs-js/examples/table.html)
@@ -61,7 +61,7 @@ This means that all examples need to be called from some kind of user input, lik
 ### Example 1
 
 Get the value for a specific entry.
-Look at `examples/simple.html` ([demo](https://fanatiqs.github.io/esp-nvs-js/examples/simple.html)) for a complete example.
+Look at `examples/single_value.html` ([demo](https://fanatiqs.github.io/esp-nvs-js/examples/single_value.html)) for a complete example.
 
 ```js
 const nvs = new NVS(await navigator.serial.requestPort());
