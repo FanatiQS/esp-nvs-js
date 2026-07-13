@@ -91,16 +91,15 @@ export class NVS {
 				return null;
 			}
 
-			// Connects to device if not already connected
-			if (!this.loader.chip) {
-				await this.connect();
-			}
-
-			// Fetches NVS partitions automatically if no partitions have been added
+			// Fetches NVS partitions automatically if no partition has been added
 			if (!this.addr_list.length) {
 				if (!await this.fetchPartition()) {
 					throw new Error("NVS partition not found");
 				}
+			}
+			// Connects to device if not connected and partition address is available
+			else if (!this.loader.chip) {
+				await this.connect();
 			}
 
 			// Reads first NVS page containing data

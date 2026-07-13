@@ -133,6 +133,33 @@ test("empty default nvs partition", async () => {
 	}
 });
 
+// Asserts that fetching partition table works with manually connecting loader
+test("fetch pages with manual connect", async () => {
+	// Creates and connects loader
+	const loader = await loader_fetch();
+	await loader.connect();
+
+	// Reads and asserts default partition was read correctly
+	const nvs = new NVS(loader);
+	const found = await nvs.fetchPartition();
+	assert(found);
+	await nvs_config_assert_iterable(nvs_config_default, nvs);
+});
+
+// Asserts that manually defined partition table works with manually connected loader
+test("set pages with manual connect", async () => {
+	// Creates and connects loader without partition table
+	const addr = await loader_map_get_addr();
+	const data = await loader_map_get_data();
+	const loader = loader_from_map(loader_map_from(addr, data));
+	await loader.connect();
+
+	// Reads and asserts default partition was read correctly
+	const nvs = new NVS(loader);
+	nvs.setPartition(addr, data.byteLength);
+	await nvs_config_assert_iterable(nvs_config_default, nvs);
+});
+
 
 
 // Searching for specified value
