@@ -562,6 +562,21 @@ test("api surface", async () => {
 	]);
 });
 
+// Asserts that NPM and CDN uses same version of esptool
+test("esptool version match", async () => {
+	const moduleName = "esptool-js";
+
+	// Gets local file importing esptool from CDN
+	const cdn_body = await fetch("../src/esptool.js").then((res) => res.text());
+
+	// Gets versioned NPM package identifier from dependency list
+	const packageData = await fetch("../package.json").then((res) => res.json());
+	const versionString = `${moduleName}@${packageData.dependencies[moduleName]}`;
+
+	// Asserts that same version defined in for NPM is the one used for CDN
+	assert.include(cdn_body, versionString);
+});
+
 // Asserts that performance has not regressed too much
 test("performance", async () => {
 	const loader = await loader_fetch();
