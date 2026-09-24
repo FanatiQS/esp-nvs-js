@@ -100,6 +100,24 @@ function nvs_buffer_null_terminate(buffer, offset, length) {
 }
 
 /**
+ * Compares name in partition table buffer against a string
+ * @param {Uint8Array} buffer
+ * @param {number} offset
+ * @param {string} name
+ */
+function nvs_partition_name_compare(buffer, offset, name) {
+	for (let i = 0; i < name.length; i++) {
+		if (buffer[offset + i + 12] !== name.charCodeAt(i)) {
+			return false;
+		}
+	}
+	if (buffer[offset + name.length + 12] !== 0x00) {
+		return false;
+	}
+	return true;
+}
+
+/**
  * Joins all chunks into a single buffer
  * @param {nvs_chunks_info} info Metadata describing how to assemble chunks
  * @param {Uint8Array[]} chunks Buffer chunks to assemble into single buffer
@@ -381,17 +399,8 @@ export async function nvs_pages_lookup(loader, addr_list, name = "nvs", addr = 0
 	const view = new DataView(data.buffer);
 
 	for (let i = 0; i < PARTITION_TABLE_SIZE; i += PARTITION_TABLE_ENTRY_SIZE) {
-		// Parses partition entries up to magic number being 0xffff
-		if (view.getUint16(i + 0) === 0xffff) {
-			break;
-		}
-
-		// Registers NVS partition if it has correct magic number, type, subtype, name and is not encrypted
-		if (
-			view.getUint32(i + 0) === 0xaa500102
-			&& view.getUint32(i + 28) === 0x00000000
-			&& String.fromCharCode(...nvs_buffer_null_terminate(view.buffer, view.byteOffset + i + 12, 16)) === name
-		) {
+		// Registers NVS partition if it has correct magic bytes, type+subtype, name and is not encrypted
+		if (view.getUint32(i + 0) === 0xaa500102 && nvs_partition_name_compare(data, i, name) && view.getUint32(i + 28) === 0x00000000) {
 			nvs_pages_set(view.getUint32(i + 4, true), view.getUint32(i + 8, true), addr_list);
 			return true;
 		}
