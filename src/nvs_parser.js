@@ -25,8 +25,8 @@
  * @property {null} chunks Blob work cache, only used during parsing
  *
  * @typedef {Omit<nvs_entry, "value"|"chunks"> & { value: nvs_value|null, chunks: nvs_chunks|null}} nvs_cache_entry Entry in cache entries map
- * @typedef {Map<string,nvs_cache_entry>} nvs_cache_namespace Entires map in cache
- * @typedef {nvs_cache_namespace[]} nvs_cache Cache for parsed data whose internals are considered private
+ * @typedef {Map<string,nvs_cache_entry>} nvs_cache_namespace Entries map in cache
+ * @typedef {[ nvs_cache_namespace, ...nvs_cache_namespace[] ]} nvs_cache Cache for parsed data whose internals are considered private
  *
  * @typedef {import("./esptool.js").ESPLoader} ESPLoader
  */
